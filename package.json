@@ -1,0 +1,15 @@
+{
+  "name": "skillet",
+  "private": true,
+  "workspaces": ["server", "web"],
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "dev:server": "bun run --cwd server dev",
+    "dev:web": "bun run --cwd web dev",
+    "build": "bun run --cwd web build",
+    "start": "bun run --cwd server start"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}
