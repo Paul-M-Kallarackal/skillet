@@ -1,0 +1,18 @@
+.agent-icon { display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center; flex-shrink: 0; vertical-align: middle; }
+.agent-icon-art { display: block; width: 18px; height: 18px; background: currentColor; mask-size: contain; mask-position: center; mask-repeat: no-repeat; }
+.agent-icon-codex { color: #000000; }
+.agent-icon-codex .agent-icon-art { width: 22px; height: 22px; flex-shrink: 0; }
+.agent-badge { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 32px; flex-shrink: 0; color: var(--text-secondary); }
+.agent-tooltip { display: none; position: absolute; z-index: 30; top: calc(100% + 6px); left: 0; width: max-content; max-width: 180px; padding: 5px 8px; background: var(--bg-surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--ui-shadow-card); font-size: 12px; line-height: 18px; pointer-events: none; }
+.agent-badge:hover .agent-tooltip, .agent-filter:hover .agent-tooltip, .agent-filter:focus .agent-tooltip { display: block; }
+.skill-location .agent-badge { z-index: 3; }
+.sidebar-agent-filters { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; }
+.agent-filter { position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; flex-shrink: 0; border-radius: var(--ui-radius-control); color: var(--text-secondary); }
+.agent-filter:hover { background: var(--ui-surface-hover); }
+.agent-filter.active { background: var(--ui-selection); }
+
+.agent-status-dot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; margin-left: auto; }
+.agent-status-dot.detected { background: #23834b; }
+.agent-status-dot.not-detected { background: #c43b40; }
+
+.sidebar-agent-filters .agent-filter { padding-right: 16px; }

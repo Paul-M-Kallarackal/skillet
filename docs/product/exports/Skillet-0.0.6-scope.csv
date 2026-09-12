@@ -1,0 +1,7 @@
+Term,Plain meaning,Fit for your Skillet
+Skill templates,"A starter `SKILL.md` with name, description and instruction sections",Optional convenience if you want to create skills inside Skillet. Not required for managing your chosen collection.
+Import scanning,Inspect an incoming skill's instructions and scripts for suspicious behavior,"Keep basic validation and a readable file preview with import. A dedicated threat-analysis feature is a separate, optional decision."
+Pinned projects,Folders you explicitly mark for quick access,Optional small convenience; not a reason to redesign the product.
+Recent projects,Shortcuts to folders recently opened in Skillet,Optional. No need to inspect editor history or rank projects by inferred usage.
+Private publishing,"A hosted team registry with accounts, permissions and published packages",Out of scope. Sending someone a skill ZIP needs none of this.
+Marketplace discovery,"Browsing public skills, rankings or community collections",Out of scope for the main experience. You curate what enters your library.

@@ -1,0 +1,126 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Skillet 0.0.5 — product brief</title><style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#fffef8;color:#28303d;font:15px/1.6 system-ui,sans-serif}main{max-width:1100px;margin:48px auto;padding:40px;background:white;border:1px solid #ece8d6;border-radius:18px}h1{font-size:32px;line-height:1.2}h2{font-size:23px;margin-top:36px;padding-top:14px;border-top:2px solid #fff1aa}h3{font-size:18px;margin-top:26px}a{color:#59470c;text-decoration:underline;text-underline-offset:3px}table{width:100%;border-collapse:collapse;font-size:13px;margin:20px 0;overflow-wrap:anywhere}th,td{padding:10px;text-align:left;border:1px solid #e5e3da;vertical-align:top}th{background:#fff6c5}code{font-size:.9em;overflow-wrap:anywhere}pre{background:#f7f7f3;padding:16px;border-radius:10px;white-space:pre-wrap}li{margin:7px 0}p{orphans:3;widows:3}@media(max-width:700px){main{margin:0;padding:18px;border:0}table{font-size:11px}td,th{padding:6px}}@media print{body{background:white;font-size:10px}main{max-width:none;margin:0;padding:0;border:0;border-radius:0}h1{font-size:24px}h2{font-size:17px;margin-top:22px;break-after:avoid}h3{font-size:13px;break-after:avoid}table{font-size:9px}th,td{padding:6px}tr{break-inside:avoid}pre{break-inside:avoid}a{color:#28303d}}
+</style></head><body><main><h1>Skillet 0.0.5 — consolidated product brief</h1>
+<p>Reviewed 12 September 2026. <strong>This is the next product/design target, not a shipped application release.</strong> It incorporates Paul's requested changes, a README/code audit, and a comparison with five other skill managers.</p>
+<h2>Current version and delivery status</h2>
+<table>
+<thead>
+<tr><th>Artifact</th><th>Verified state</th></tr>
+</thead>
+<tbody>
+<tr><td>Application source</td><td>Bun workspace; root package declares <code>0.1.0</code>. No version change or new application release was made for this brief.</td></tr>
+<tr><td>Latest Skillet Paper file</td><td><a href="https://app.paper.design/file/01M2AKV284AA8XMEQBNBRZV0CQ/6-0">Skillet — 0.0.4</a>, five current desktop boards: inventory, prompt, sharing, New Folder, interaction states.</td></tr>
+<tr><td>Paper history</td><td>Earlier full flows remain on page <code>2-0</code>. Current page/artboard labels still contain <code>v4</code>; the file title uses <code>0.0.4</code>.</td></tr>
+<tr><td>Approved common components</td><td><a href="https://app.paper.design/file/01M2AR2ECHY7WPRM851MXYYZFJ/4-0">Components Paper library</a>; local tokens, HTML templates and previews in <code>Components/patterns/shared-ui</code>. These are not yet a working React component package. Its local manifest still says <code>4.0.0</code>.</td></tr>
+<tr><td>This document</td><td><code>0.0.5</code>: consolidated requirements and implementation handoff.</td></tr>
+</tbody>
+</table>
+<p>There is currently <strong>no runnable Skillet build containing all the requested design and sharing changes</strong>. The code still has green accents, “View prompt,” “Share &amp; transfer,” “Copy prompt,” and “Add project folder.” The common library itself confirms that its themes have not recolored Skillet. The new requirements below must not be described as already implemented.</p>
+<h2>Product definition</h2>
+<p>Skillet is a local desktop-oriented control panel for AI coding skills: find every copy, understand which agent can use it, edit its instructions and invocation settings, and move or share it with a reviewable result.</p>
+<p>Its strongest existing foundation is the combination of project/worktree discovery, a visibility matrix, duplicate comparison, canonical hub storage, and reversible filesystem operations. Preserve that depth while making everyday actions compact and easy to find.</p>
+<h2>Everything requested for 0.0.5</h2>
+<table>
+<thead>
+<tr><th>Requirement</th><th>Current state</th><th>Acceptance for the target</th></tr>
+</thead>
+<tbody>
+<tr><td>Yellow Skillet theme</td><td>Approved direction; app and current Skillet boards remain green</td><td>Apply the shared <code>lemon</code> semantic tokens across all main screens, controls and states.</td></tr>
+<tr><td>Light mode only</td><td>App already declares light appearance</td><td>Keep every theme light, including overlays and loading/error states; no automatic dark variant.</td></tr>
+<tr><td>Subtle background gradients</td><td>Present in common design templates</td><td>Gradients only on page/card/modal backgrounds. Buttons have solid pastel fills in default, hover and pressed states.</td></tr>
+<tr><td>Compact clickable cards</td><td>Paper refinement exists; app still uses a View button</td><td>Clicking/keyboard-activating the card opens the skill. Independent share icon in the top-right corner. No nested interactive controls.</td></tr>
+<tr><td><code>+ New Folder</code></td><td>Paper refinement exists</td><td>Use this label for adding an existing project directory to the scan; do not imply it creates a filesystem folder.</td></tr>
+<tr><td>Contextual icons</td><td>Paper refinement exists</td><td>Copy icon beside the prompt, corner share icon, close icon in modals. Accessible names, tooltips and visible focus; retain labels for unfamiliar or consequential actions.</td></tr>
+<tr><td>Reusable chips</td><td>Paper masters exist</td><td>Reuse agent, scope and category chips. Clear selected/filter states. Avoid one-off badges with inconsistent padding.</td></tr>
+<tr><td>Compact rounded modals</td><td>Paper refinement exists</td><td>Consistent header/body/footer alignment, brief copy, grouped fields, one main action, focus restoration and recoverable errors.</td></tr>
+<tr><td>Clean statuses</td><td>Approved common components</td><td>Small semantic icon plus readable neutral label; no full-width outlined status strips.</td></tr>
+<tr><td>Shared component library outside products</td><td>Tokens/templates exist in Components</td><td>Build reusable working components in Components, then copy approved components into Skillet with origin/version recorded. Skillet must run independently of the Desktop library checkout.</td></tr>
+<tr><td>Five proper themes</td><td>Common library has lemon, rose, coral, sky, lavender</td><td>Reuse shared geometry and semantic roles; only palette/background effects vary. Skillet defaults to lemon.</td></tr>
+<tr><td>Global skill at top level</td><td>Make global action exists</td><td>Global skills have a first-class top-level view. Promotion previews the new hub location and agent links, preserves project access where intended, then updates the visible scope.</td></tr>
+<tr><td>Change when invoked</td><td>Editor exists, with compatibility issues</td><td>Edit the description and supported agent-specific invocation policy. Explain which files and linked agents are affected before saving.</td></tr>
+<tr><td>Reliable sharing outside this machine</td><td>Missing</td><td>Export a complete portable skill ZIP; import it with destination, conflict and compatibility review.</td></tr>
+<tr><td>Copy to another agent</td><td>Raw local copy/link exists</td><td>Choose agent and global/project scope; distinguish an independent copy from a shared link; report unsupported settings and prerequisites.</td></tr>
+<tr><td>Semver-style design versions</td><td>File title partially normalized</td><td>Use <code>0.0.x</code> for design iterations, preserve prior pages and document version mappings. Do not silently equate design, app and skill-package versions.</td></tr>
+<tr><td>Desktop focus</td><td>Accepted</td><td>Complete desktop Skillet flows first; retain existing responsive functionality. Mobile redesign is deferred. HeartTap remains a separate project.</td></tr>
+</tbody>
+</table>
+<h2>Four main workflows</h2>
+<h3>1. Make global</h3>
+<p>Open skill → Make global → see canonical hub destination and agents that will gain access → review filesystem changes → apply → return to the Global view with feedback and undo.</p>
+<p>The hub directory alone does not guarantee that every agent discovers the skill. The existing action moves to the hub and retains the source link; the target must explicitly account for required global agent links. Existing names must trigger a conflict choice, never a silent overwrite.</p>
+<h3>2. Change invocation</h3>
+<p>Open skill → Invocation → choose agent → edit “Use when…” description and supported options → preview affected files → save.</p>
+<p>Keep “automatic selection,” “explicit invocation only,” and “disabled” distinct. The description influences model selection; matching a description is not a deterministic guarantee that a skill will run.</p>
+<p>Codex documents per-skill <code>agents/openai.yaml</code> policy for implicit invocation and path-based <code>[[skills.config]]</code> entries for disabling a local skill. Claude Code uses its own frontmatter and settings. These need separate adapters. <a href="https://learn.chatgpt.com/docs/build-skills">Codex skills documentation</a>, <a href="https://code.claude.com/docs/en/skills">Claude Code skills documentation</a>.</p>
+<h3>3. Share a portable file</h3>
+<p>Share icon → Export ZIP → preview included files, version and compatibility findings → download <code>skill-name-0.0.1.zip</code> → attach the file in Slack. Recipient downloads it → imports into Skillet → selects agent/scope → reviews → installs.</p>
+<p>Recommended package layout:</p>
+<pre><code class="language-text">skill-name-0.0.1.zip
+└── skill-name/
+    ├── SKILL.md
+    ├── scripts/       # when referenced
+    ├── references/    # when referenced
+    ├── assets/        # when referenced
+    └── agents/       # applicable vendor metadata
+</code></pre>
+<p>Use a standard ZIP containing the actual skill folder, not an absolute local link or a copied prompt. Preserve relative references, required resources and licenses. Include a content manifest/checksum for Skillet's import review. Exclude machine credentials, caches and unrelated files; flag external symlink targets rather than silently packaging them. Archive extraction must reject path traversal and unsafe links and impose size/file-count limits.</p>
+<p>Claude documents ZIP packaging with one skill-folder root. Slack supports file uploads up to 1 GB, subject to workspace/Connect restrictions and its file scanning; successful upload is not a guarantee that another agent can run the contents. A ZIP is the recommended transport, not a special Slack skill format. No Slack sending is implemented or performed here. <a href="https://support.claude.com/en/articles/12512198-how-to-create-custom-skills">Claude packaging guide</a>, <a href="https://slack.com/help/articles/201330736-Add-files-to-Slack">Slack file upload documentation</a>.</p>
+<h3>4. Copy to another agent</h3>
+<p>Share icon → Copy to agent → choose Claude Code, Codex or another target → select global/project → review compatibility and destination → apply → inspect resulting availability.</p>
+<p>The shared <code>SKILL.md</code> structure is portable, but vendor metadata, tool names, scripts, absolute paths and required MCP servers may not be. A copied folder is not automatically a converted workflow. Preserve the original; preview any adapter changes. Distinguish Claude Code from Claude web uploads, which accept a narrower frontmatter schema. <a href="https://agentskills.io/specification">Agent Skills specification</a>, <a href="https://code.claude.com/docs/en/skills#using-skill-frontmatter-outside-claude-code">Claude Code cross-product compatibility</a>.</p>
+<h2>Existing capabilities to preserve</h2>
+<p>Code paths exist for global/project/plugin scanning, configured project roots and worktrees, installed/custom agent detection, search/filtering, Markdown/frontmatter editing, instance grouping, diffs, visibility conditions, local hub adoption, linking, copying, moving, renaming, trash/restore, history/undo, filesystem previews, rollback and live refresh.</p>
+<p>These are implementation observations, not a claim that all runtime behavior was retested. Plugin-managed originals remain read-only. Local linked sharing, user-to-user distribution, and agent-format adaptation must have separate wording.</p>
+<h2>What other managers have that Skillet lacks</h2>
+<p>Compared against current maintainer READMEs on the review date. “Missing” means absent from Skillet's inspected UI/API/code paths; competitor capabilities are documented claims, not independently executed tests. Roadmap-only features are excluded.</p>
+<table>
+<thead>
+<tr><th>Gap</th><th>Other manager with documented support</th><th>Skillet today</th><th>Recommendation</th></tr>
+</thead>
+<tbody>
+<tr><td>Search/discover and install from Git repositories</td><td><a href="https://github.com/vercel-labs/skills">Vercel skills</a>, <a href="https://github.com/crossoverJie/SkillDeck">SkillDeck</a></td><td>Finds local installations; no remote installer</td><td>High: paste repository URL first, then add a discovery browser.</td></tr>
+<tr><td>Check for upstream changes and update</td><td><a href="https://github.com/vercel-labs/skills">Vercel skills</a>, <a href="https://github.com/crossoverJie/SkillDeck">SkillDeck</a></td><td>Local divergence comparison only</td><td>High: retain source identity/revision, preview remote-vs-local changes, preserve local edits.</td></tr>
+<tr><td>Download/archive installation</td><td><a href="https://github.com/vercel-labs/skills">Vercel skills</a> accepts skill documents and ZIP/tar download sources</td><td>No archive import/export route</td><td>High: implement the user's ZIP round-trip first.</td></tr>
+<tr><td>Create a skill from a template</td><td><a href="https://github.com/abubakarsiddik31/skill-manager">Skill Manager — abubakarsiddik31</a></td><td>Edits existing skills only</td><td>Medium: compact New Skill flow with description, scope and agent.</td></tr>
+<tr><td>Scan imported skills for risky content</td><td><a href="https://github.com/abubakarsiddik31/skill-manager">Skill Manager — abubakarsiddik31</a> documents SkillSpector analysis</td><td>Schema validation and filesystem guards; no content scanner</td><td>High alongside remote imports; findings are signals, not proof of safety.</td></tr>
+<tr><td>Suggest projects and pin frequent ones</td><td><a href="https://github.com/abubakarsiddik31/skill-manager">Skill Manager — abubakarsiddik31</a></td><td>Manual project roots and search</td><td>Medium: pinned projects first; make history/editor-recents discovery optional.</td></tr>
+<tr><td>Native installers</td><td><a href="https://github.com/jiweiyeah/Skills-Manager">Skills Manager — jiweiyeah</a> provides macOS, Windows and Linux packages</td><td>Bun development workflow</td><td>Medium: Linux package/AppImage is especially relevant to Paul's setup.</td></tr>
+<tr><td>CLI, diagnostics and repair</td><td><a href="https://github.com/jiweiyeah/Skills-Manager">Skills Manager — jiweiyeah</a> documents <code>skm doctor</code>, <code>fix</code> and a companion skill</td><td>HTTP API, no equivalent packaged CLI</td><td>Medium: reuse existing preview/apply operations and machine-readable output.</td></tr>
+<tr><td>Agent-driven management</td><td><a href="https://github.com/crossoverJie/SkillDeck">SkillDeck</a> ships a management skill</td><td>No packaged Skillet companion skill or MCP service found</td><td>Medium: expose existing operations through a narrow adapter with previews.</td></tr>
+<tr><td>Windows link fallbacks</td><td><a href="https://github.com/jiweiyeah/Skills-Manager">Skills Manager — jiweiyeah</a> documents junction and tracked-copy fallbacks</td><td>Symlink/copy operations; no equivalent fallback workflow found</td><td>Later, when Windows becomes a delivery target.</td></tr>
+<tr><td>Translation/localization</td><td><a href="https://github.com/crossoverJie/SkillDeck">SkillDeck</a>, <a href="https://github.com/jiweiyeah/Skills-Manager">Skills Manager — jiweiyeah</a></td><td>No equivalent interface found</td><td>Later; limited value for the immediate workflow.</td></tr>
+<tr><td>Private publishing with package versions and team permissions</td><td><a href="https://github.com/iflytek/skillhub">SkillHub — iFlytek</a></td><td>Local single-user hub and journal</td><td>Later: useful for a team product, excessive for basic Slack sharing.</td></tr>
+</tbody>
+</table>
+<p>There is substantial overlap: central libraries, symlinks, editors and per-agent controls are not unique to Skillet. Its useful positioning is <strong>explainable availability plus reversible local changes</strong>. Avoid the README's unsupported universal claim that no competitor explains visibility.</p>
+<h2>README and implementation audit</h2>
+<table>
+<thead>
+<tr><th>Finding</th><th>Evidence</th><th>Required correction</th></tr>
+</thead>
+<tbody>
+<tr><td>“No code splitting” is stale</td><td><code>apps/web/src/app/App.tsx</code> lazy-loads SkillDetailPage</td><td>Describe the current split; measure before quoting a bundle size.</td></tr>
+<tr><td>Skills list described as rows</td><td><code>components/SkillCards.tsx</code> renders articles/cards</td><td>Update the tour to match the actual interface.</td></tr>
+<tr><td>Codex disabling schema mismatch</td><td><code>hub/trigger.ts</code> writes a skill-name-keyed object; current official docs use path-based <code>[[skills.config]]</code></td><td>Fix reader and writer together; test actual Codex-recognized settings before claiming support.</td></tr>
+<tr><td>Claude trigger assumptions leak across agents</td><td><code>visibility/visibility.ts</code> applies frontmatter flags and path conditions generally</td><td>Gate rules by verified agent capability. Show unknown/unsupported behavior honestly.</td></tr>
+<tr><td>Codex implicit policy is missing</td><td>No <code>allow_implicit_invocation</code> handling in the inspected app; official docs and installed skill-creator reference describe it</td><td>Read/write the selected skill's <code>agents/openai.yaml</code> with preview and undo.</td></tr>
+<tr><td>Invalid settings may be discarded during trigger edits</td><td><code>hub/trigger.ts</code> catches JSON/TOML parse errors and substitutes an empty object</td><td>Stop with a repairable parse error instead of replacing unrelated configuration.</td></tr>
+<tr><td>“Copies differ by content” overstates detection</td><td><code>scan/walk.ts</code> hashes SKILL.md contents plus filenames; <code>hub/diff.ts</code> compares the skill document</td><td>Supporting-file content changes can be missed. Hash all packaged files and offer file-level diffs.</td></tr>
+<tr><td>Safety language needs narrower scope</td><td>README says every mutation has the same preview/undo guarantees; route behaviors differ</td><td>Document which operations are journaled, previewed and undoable; distinguish config saves and permanent purge.</td></tr>
+<tr><td>Version identifiers disagree</td><td>App <code>0.1.0</code>, Paper file <code>0.0.4</code>, internal <code>v4</code>, common manifest <code>4.0.0</code></td><td>Maintain an explicit artifact/version table and normalize labels deliberately.</td></tr>
+</tbody>
+</table>
+<p>The README's high-level explanation of the local hub and visibility problem remains useful. Its getting-started clone URL is still a placeholder. It should link to this brief until the requested changes are implemented, rather than presenting target behavior as shipped.</p>
+<h2>Recommended build order</h2>
+<ol>
+<li><strong>Correctness first:</strong> vendor-specific visibility/invocation, Codex config schema, refusal to overwrite malformed settings, whole-folder hashing. Add isolated mutation fixtures.</li>
+<li><strong>Finish the approved interface:</strong> shared working components, lemon theme, clickable cards, icon affordances, compact dialogs and Global navigation; reconcile all affected Paper flows.</li>
+<li><strong>Portable sharing:</strong> ZIP export/import, resource completeness, conflict handling, compatibility report, and copy-to-agent workflow.</li>
+<li><strong>Acquire and maintain skills:</strong> URL install, provenance, update preview and New Skill templates. Add import scanning with remote acquisition.</li>
+<li><strong>Convenience and distribution:</strong> pinned projects, desktop packaging, CLI/companion skill; consider private registry and localization only when needed.</li>
+</ol>
+<p>Release acceptance: an isolated skill with a script and reference must survive export → import on a different root → target-agent installation; trigger settings must be recognized by the actual supported agent; edits to supporting files must trigger divergence; failures must preserve unrelated settings and allow recovery. Then run <code>bun run quality</code> and <code>bun run test:browser</code>, including keyboard/focus and main desktop flows.</p>
+<h2>Verification performed for this brief</h2>
+<p>Read the complete README, repository guidance, current UI/action and API routes, trigger/visibility/linking/hash/diff implementations, existing sharing browser test, common library usage notes, and live Paper metadata. Compared the three prior-art repositories already named in the README plus SkillDeck and iFlytek SkillHub. Checked official Codex, Claude, Agent Skills and Slack documentation.</p>
+<p><code>bun run test:unit</code>: <strong>1 test file, 3 tests passed</strong>. These are parsing tests; they do not verify the identified trigger or transfer issues. No end-to-end run, broad frontend change, source release, agent-config mutation or Slack message was performed for this report.</p>
+</main></body></html>

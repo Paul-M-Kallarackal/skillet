@@ -1,0 +1,31 @@
+.discover-page { display: flex; flex-direction: column; gap: 24px; max-width: 960px; }
+.discover-page .page-header { margin-bottom: 0; }
+.discover-page h1 { font-size: var(--ui-font-title); line-height: var(--ui-line-title); }
+.discover-page .page-header p { color: var(--text-secondary); }
+.catalog-search { display: flex; gap: 12px; }
+.catalog-search input { flex: 1; min-width: 0; }
+.catalog-search button { flex-shrink: 0; }
+.catalog-status, .catalog-note, .catalog-destination, .catalog-source { color: var(--text-secondary); font-size: 13px; line-height: 20px; }
+.catalog-results { padding: 0; margin: 0; list-style: none; }
+.catalog-results > li { display: flex; align-items: center; gap: 24px; padding: 20px 0; border-bottom: 1px solid var(--border); }
+.catalog-results > li:first-child { padding-top: 0; }
+.catalog-result-copy { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.catalog-result-copy h2 { font-size: 14px; font-weight: 600; line-height: 20px; margin: 0 0 6px; }
+.catalog-result-copy a { font-size: 13px; color: var(--text-secondary); }
+.catalog-results button { width: 104px; flex-shrink: 0; }
+.catalog-review { display: flex; flex-direction: column; gap: 16px; }
+.catalog-review .dialog-actions { margin-top: 0; }
+.catalog-results button[aria-disabled="true"] { opacity: .65; cursor: wait; }
+.catalog-review h3 { font-size: 16px; margin: 0 0 8px; overflow-wrap: anywhere; }
+.catalog-review p { margin: 0; }
+.catalog-destination { display: flex; flex-direction: column; gap: 4px; }
+.catalog-destination code { overflow-wrap: anywhere; font-size: 12px; }
+.catalog-review summary { cursor: pointer; min-height: 32px; font-size: 13px; }
+.catalog-review details ul { max-height: 160px; overflow: auto; overflow-wrap: anywhere; padding-left: 20px; font-size: 13px; }
+.catalog-instructions { margin: 8px 0 0; padding: 16px; border-radius: var(--radius); background: var(--ui-surface-sunken); max-height: 240px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/20px var(--mono); }
+.catalog-success { margin: 0; color: var(--text); overflow-wrap: anywhere; }
+.catalog-success a { margin-left: 8px; }
+@media (max-width: 480px) { .catalog-results > li { gap: 12px; } .catalog-results button { width: 80px; } }
+
+.catalog-suggestions-heading { margin: 0; font-size: 16px; font-weight: 600; }
+.catalog-suggestion-description { margin: 0 0 6px; font-size: 13px; line-height: 20px; color: var(--text-secondary); }

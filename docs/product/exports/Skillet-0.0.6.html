@@ -1,0 +1,73 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Skillet 0.0.6 — product brief</title><style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#fffef8;color:#28303d;font:15px/1.6 system-ui,sans-serif}main{max-width:1100px;margin:48px auto;padding:40px;background:white;border:1px solid #ece8d6;border-radius:18px}h1{font-size:32px;line-height:1.2}h2{font-size:23px;margin-top:36px;padding-top:14px;border-top:2px solid #fff1aa}h3{font-size:18px;margin-top:26px}a{color:#59470c;text-decoration:underline;text-underline-offset:3px}table{width:100%;border-collapse:collapse;font-size:13px;margin:20px 0;overflow-wrap:anywhere}th,td{padding:10px;text-align:left;border:1px solid #e5e3da;vertical-align:top}th{background:#fff6c5}code{font-size:.9em;overflow-wrap:anywhere}pre{background:#f7f7f3;padding:16px;border-radius:10px;white-space:pre-wrap}li{margin:7px 0}p{orphans:3;widows:3}@media(max-width:700px){main{margin:0;padding:18px;border:0}table{font-size:11px}td,th{padding:6px}}@media print{body{background:white;font-size:10px}main{max-width:none;margin:0;padding:0;border:0;border-radius:0}h1{font-size:24px}h2{font-size:17px;margin-top:22px;break-after:avoid}h3{font-size:13px;break-after:avoid}table{font-size:9px}th,td{padding:6px}tr{break-inside:avoid}pre{break-inside:avoid}a{color:#28303d}}
+</style></head><body><main><h1>Skillet 0.0.6 — your personal skill library</h1>
+<p>12 September 2026 · Product brief · Supersedes the broad roadmap in 0.0.5.</p>
+<p><strong>Skillet gives you a clean, personal view of the skills you choose to use: what they do, which projects and agents can use them, when they are invoked, and how to share them.</strong></p>
+<p>Your installed and selected skills are the starting point. Search means searching your library. Adding a skill means choosing a folder or importing something you deliberately selected. A public marketplace, community rankings and team publishing are outside this product's current scope.</p>
+<h2>The four things it must do well</h2>
+<table>
+<thead>
+<tr><th>Action</th><th>What you get</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Make global</strong></td><td>Promote a project skill into your top-level Global library and make it available to the agents you select. Preview the move and links; preserve existing project access where intended.</td></tr>
+<tr><td><strong>Change invocation</strong></td><td>Edit what the skill should be used for and the supported agent-specific controls for automatic use, explicit invocation or disabling. See which linked copies will be affected.</td></tr>
+<tr><td><strong>Share a skill</strong></td><td>Download the complete skill folder as a versioned ZIP, including its referenced scripts and resources. Send it through Slack or another file-sharing tool. The recipient chooses where to install it.</td></tr>
+<tr><td><strong>Copy to another agent</strong></td><td>Choose an agent and global/project destination. Make an independent copy or keep one shared linked copy. Explain incompatible settings and missing tools before applying.</td></tr>
+</tbody>
+</table>
+<p>Global storage and agent availability are separate: putting a skill in Skillet's hub must not imply that every agent automatically reads it. Similarly, copying files from Codex to Claude Code must not imply that vendor-specific settings have been converted correctly.</p>
+<h2>The everyday view</h2>
+<p>Open Skillet → see your skills → filter by Global, project or agent → click a card to read/use the skill → edit invocation or use the corner share control.</p>
+<p>Keep these existing capabilities available without crowding each card: duplicate detection, file differences, availability explanations, local history, undo, trash/restore and worktree awareness. Put detailed paths and filesystem plans inside the relevant detail or review step.</p>
+<p>The main view should answer: “Which of my skills do I want here?” and “Will this agent be able to use it?”</p>
+<h2>Your design decisions</h2>
+<ul>
+<li><strong>Light only. Skillet uses soft yellow.</strong> The shared library also offers pink, peach red, blue and purple through consistent semantic tokens.</li>
+<li><strong>Solid pastel buttons; subtle gradients in backgrounds only.</strong> Apply this to page, card and modal surfaces.</li>
+<li><strong>Clean clickable cards.</strong> No View button. A separate share icon sits at the top right. Reusable chips show agent, scope and category.</li>
+<li><strong>Compact controls.</strong> Copy is an icon beside the prompt; close and share use familiar icons with accessible names and tooltips. Keep labels where the action needs explanation.</li>
+<li><strong><code>+ New Folder</code>.</strong> Adds an existing folder to Skillet's project scan.</li>
+<li><strong>Rounded, compact, aligned modals.</strong> Brief copy, grouped fields, a clear main action, visible focus and useful error feedback.</li>
+<li><strong>Small inline statuses.</strong> An icon and readable label, without wide outlined status strips.</li>
+<li><strong>Reusable components live in Components</strong>, outside Skillet and HeartTap. Copy approved implementations into each product so each app remains self-contained.</li>
+<li><strong>Desktop first.</strong> Mobile redesign is deferred. Preserve earlier design revisions using <code>0.0.x</code> labels.</li>
+</ul>
+<h2>What the earlier suggestions meant</h2>
+<p>These were competitor features, not requirements you had requested. Their presence elsewhere does not make them gaps Skillet must fill.</p>
+<table>
+<thead>
+<tr><th>Term</th><th>Plain meaning</th><th>Fit for your Skillet</th></tr>
+</thead>
+<tbody>
+<tr><td>Skill templates</td><td>A starter <code>SKILL.md</code> with name, description and instruction sections</td><td>Optional convenience if you want to create skills inside Skillet. Not required for managing your chosen collection.</td></tr>
+<tr><td>Import scanning</td><td>Inspect an incoming skill's instructions and scripts for suspicious behavior</td><td>Keep basic validation and a readable file preview with import. A dedicated threat-analysis feature is a separate, optional decision.</td></tr>
+<tr><td>Pinned projects</td><td>Folders you explicitly mark for quick access</td><td>Optional small convenience; not a reason to redesign the product.</td></tr>
+<tr><td>Recent projects</td><td>Shortcuts to folders recently opened in Skillet</td><td>Optional. No need to inspect editor history or rank projects by inferred usage.</td></tr>
+<tr><td>Private publishing</td><td>A hosted team registry with accounts, permissions and published packages</td><td>Out of scope. Sending someone a skill ZIP needs none of this.</td></tr>
+<tr><td>Marketplace discovery</td><td>Browsing public skills, rankings or community collections</td><td>Out of scope for the main experience. You curate what enters your library.</td></tr>
+</tbody>
+</table>
+<p>The earlier comparison found public installation/update commands in <a href="https://github.com/vercel-labs/skills">Vercel Skills</a>, creation and project shortcuts in <a href="https://github.com/abubakarsiddik31/skill-manager">Skill Manager</a>, and governed team publishing in <a href="https://github.com/iflytek/skillhub">SkillHub</a>. These tools solve adjacent problems. Skillet does not need their full feature sets.</p>
+<p>Two ideas worth retaining for a personal collection are <strong>where a skill came from</strong> and <strong>whether your saved copy has changed</strong>. Skillet already has local instance comparison. A source link or optional update check for a skill you selected could extend that later, without introducing a public catalog or automatic installs.</p>
+<h2>What is built, and what remains</h2>
+<table>
+<thead>
+<tr><th>State</th><th>Included</th></tr>
+</thead>
+<tbody>
+<tr><td>Existing code</td><td>Local discovery, project/worktree scanning, card inventory, editor, visibility matrix, global move, local copy/link, history, undo and trash.</td></tr>
+<tr><td>Designed or requested; still needs app integration</td><td>Yellow shared components, latest card/icon/modal refinements and clearer Global navigation.</td></tr>
+<tr><td>New work</td><td>Portable ZIP export/import and reliable adaptation of agent-specific invocation settings.</td></tr>
+<tr><td>Correctness work identified in 0.0.5</td><td>Codex config reader/writer compatibility, agent-specific visibility rules, preserving malformed settings instead of overwriting them, and detecting changes to supporting-file contents.</td></tr>
+</tbody>
+</table>
+<p>This is a product brief, not a new application release. The inspected application package is <code>0.1.0</code>; the <a href="https://app.paper.design/file/01M2AKV284AA8XMEQBNBRZV0CQ/6-0">current Paper file is 0.0.4</a>. The <a href="Skillet-0.0.5.md#readme-and-implementation-audit">0.0.5 audit</a> retains the implementation evidence; its broader feature roadmap is superseded by this brief.</p>
+<h2>Build order</h2>
+<ol>
+<li>Correct agent availability and invocation handling so the information is trustworthy.</li>
+<li>Finish your approved personal-library interface using the shared yellow components.</li>
+<li>Complete ZIP sharing/import and copy-to-agent flows, with file previews, conflict handling and recovery.</li>
+</ol>
+<p>Success means you can find a skill you chose, make it available in the right place, control its invocation, and send a working copy to someone else. That is the product to finish before adding optional conveniences.</p>
+</main></body></html>

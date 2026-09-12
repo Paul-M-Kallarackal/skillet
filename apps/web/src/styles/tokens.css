@@ -1,0 +1,34 @@
+@import "./shared-ui.css";
+
+:root {
+  --bg: var(--ui-canvas);
+  --bg-subtle: var(--ui-canvas);
+  --bg-surface: var(--ui-surface);
+  --bg-elevated: var(--ui-surface-raised);
+  --bg-hover: var(--ui-surface-hover);
+  --border: var(--ui-border);
+  --border-strong: var(--ui-border-control);
+  --text: var(--ui-text);
+  --text-secondary: var(--ui-text-secondary);
+  --text-muted: var(--ui-text-muted);
+  --accent: var(--ui-on-primary);
+  --accent-hover: var(--ui-focus);
+  --accent-soft: var(--ui-selection);
+  --green: var(--ui-success-text);
+  --green-soft: var(--ui-success-surface);
+  --amber: var(--ui-warning-text);
+  --amber-soft: var(--ui-warning-surface);
+  --red: var(--ui-danger-text);
+  --red-soft: var(--ui-danger-surface);
+  --violet: var(--ui-info-text);
+  --radius-sm: var(--ui-radius-chip);
+  --radius: var(--ui-radius-control);
+  --radius-lg: var(--ui-radius-card);
+  --space: 8px;
+  --space-1: var(--ui-space-2);
+  --space-2: var(--ui-space-4);
+  --space-3: var(--ui-space-6);
+  --space-4: var(--ui-space-8);
+  --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}

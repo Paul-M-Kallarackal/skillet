@@ -1,6 +1,10 @@
-# Skillet
+<img src="apps/web/public/brand/skillet.png" alt="Skillet" width="180" />
 
-**A local control panel for every AI coding agent skill on your machine.**
+**Your personal, curated library of AI coding agent skills.**
+
+The [Skillet 0.0.6 product brief](docs/product/Skillet-0.0.6.md) defines the current scope: your selected skills, project and agent availability, invocation settings, and portable sharing. The later [Find skills extension](docs/product/Skillet-catalog-import.md) adds selected imports from skills.sh; team publishing remains outside this scope. This is a target specification, not a shipped release; the application package currently declares `0.1.0` and the Paper file title remains `0.0.4`. The [0.0.7 agent compatibility update](docs/product/Skillet-0.0.7-agent-compatibility.md) documents implemented support for Codex, Claude Code, Pi, OpenCode, and Cursor, with a separate versioned Paper page.
+
+The [0.0.8 Paper component revision](docs/product/Skillet-0.0.8-paper-components.md) aligns all five invocation designs with the shared yellow library. The [0.0.9 implementation](docs/product/Skillet-0.0.9-app-design.md) brings the shared yellow theme, compact dialogs, clickable cards, and invocation forms into the running application.
 
 Agent skills are folders containing a `SKILL.md` file. Claude Code, Codex, Cursor, Gemini CLI, Copilot and dozens of others all load them, each from its own directories, each with its own rules about when a skill is active. After a few months you end up with copies scattered across `~/.claude/skills`, `~/.codex/skills`, a dozen repositories, and every git worktree of each. Nothing tells you what you have, which copies have drifted apart, or which agent can actually see any given one.
 
@@ -8,7 +12,7 @@ Skillet answers three questions in one screen:
 
 1. **What skills exist**, everywhere on this machine.
 2. **Where each one lives**, including every duplicate copy and symlink.
-3. **Which agent can see it, and under exactly what conditions.**
+3. **Which agent can see it, with the known conditions and unresolved settings.**
 
 Then it lets you edit, rename, delete, move, link, copy and retrigger them, with a preview before every write and an undo after it.
 
@@ -36,7 +40,7 @@ Then it lets you edit, rename, delete, move, link, copy and retrigger them, with
 
 ## Why this exists
 
-Other skill managers exist and they are good at syncing a library into many tools. What none of them do is tell you the truth about *visibility*. A skill sitting in a repository's `.claude/skills` is invisible until your working directory is inside that repository. A skill with a `paths` glob only activates while you edit matching files. A skill can be switched to name-only by a `skillOverrides` entry you set six weeks ago in a file you have forgotten about. A plugin skill vanishes the moment you disable the plugin.
+Your chosen skills can be available in different places and under different conditions. A project skill depends on the repository context. Claude Code skills can have path-based activation and settings overrides. Plugin skills depend on their plugin being enabled. Skillet brings those details into one personal view; its visibility rules must reflect the behavior supported by each agent.
 
 Skillet reads all of that and prints it as a condition beside each agent, so the answer to "why isn't my skill firing" stops being guesswork.
 
@@ -55,15 +59,20 @@ bun install
 bun run dev
 ```
 
-Then open **http://localhost:5180**.
+Then open **http://localhost:5180**. Both servers bind to your local loopback interface.
 
 | Script | What it does |
 |---|---|
 | `bun run dev` | Starts the API on 5181 and the app on 5180 together |
 | `bun run dev:server` | API only |
 | `bun run dev:web` | App only, expects the API to be up |
-| `bun run build` | Production build of the web app into `web/dist` |
+| `bun run build` | Production build of the web app into `apps/web/dist` |
 | `bun run start` | Runs the API without file watching |
+| `bun run typecheck` | Type-checks both workspace applications |
+| `bun run test:unit` | Runs the unit test suite |
+| `bun run test:browser` | Builds and runs desktop/mobile browser checks |
+| `bun run deadcode` | Finds unused files, exports, dependencies, and types |
+| `bun run quality` | Runs lint, type-checks, dead-code analysis, unit tests and the production build |
 
 The first scan takes one to three seconds depending on how many repositories you have. Skillet writes nothing until you ask it to.
 
@@ -84,14 +93,14 @@ Save, and it rescans immediately. Project skills, git worktrees and repository l
 
 ## A tour of the app
 
-**Skills list.** Every skill on the machine, one row each, with its description, its scope, the agents that can read it, and any flags. Filter by scope, by repository, or by agent from the sidebar. Search by name or description. Tick "problems only" to see just the skills that are invalid, shadowed, or have copies that have drifted apart. Press `⌘K` anywhere to jump to a skill by name.
+**Skills list.** Click a card to open its starter prompt; use its corner share icon to manage global availability and agent transfers. Cards show a short description and reusable agent/scope chips. Filter by scope, by repository, or by agent from the sidebar. Search by name or description. Tick "problems only" to see just the skills that are invalid, shadowed, or have copies that have drifted apart. Press `⌘K` anywhere to jump to a skill by name.
 
 **Skill detail** has five tabs.
 
 - **Content** edits the frontmatter through a form and the body in a Markdown editor, validating against the Agent Skills spec on save. It also renames and trashes.
 - **Visibility** is the matrix described below.
 - **Instances** lists every copy of the skill on disk with its content hash, its git status, and which agents read it. Pick any two copies and see a unified diff. Move the skill to the hub or into a repository, or copy it.
-- **Triggers** changes what makes the skill fire, per agent.
+- **Triggers** offers separate invocation controls for Codex, Claude Code, Pi, OpenCode, and Cursor. See the [support matrix and limits](docs/product/Skillet-0.0.7-agent-compatibility.md).
 - **History** shows every change Skillet has made to this skill, with an undo.
 
 **Agents** lists all 77 agents Skillet knows, which are installed here, and the exact directories each one reads.
@@ -110,7 +119,9 @@ This is the point of the tool. For a given skill, each installed agent gets one 
 | `user-only` | Only you can invoke it; the model cannot |
 | `model-only` | Only the model can invoke it; hidden from your slash menu |
 | `name-only` | The agent sees the name but not the description |
-| `off` | Hidden from this agent entirely |
+| `off` | Disabled or denied by the settings Skillet can resolve |
+| `ask` | OpenCode requires permission before loading |
+| `unknown` | Invocation policy is unverified or runtime settings cannot be resolved |
 | `not-linked` | This agent has no copy of this skill |
 | `n-a` | The agent is not installed on this machine |
 
@@ -185,7 +196,7 @@ Nothing has touched the disk at that point. You confirm, and only then does it a
 | **Unlink** | Removes a symlink, never a real directory |
 | **Copy** | Either a link, or a genuinely independent copy you can then diff |
 | **Move** | Between a repository and the hub, or between repositories, relinking as it goes |
-| **Trigger** | Writes frontmatter fields, Claude Code `skillOverrides`, or a Codex `config.toml` entry |
+| **Trigger** | Writes supported per-agent frontmatter, Claude Code overrides, Codex policy/config, or OpenCode skill permissions |
 
 Every applied operation appends an entry to `~/.skillet/journal.jsonl` containing both the steps taken and their inverses. **Undo** replays the inverses of the most recent entry. The History tab shows what happened to a given skill.
 
@@ -240,19 +251,20 @@ Other state Skillet owns: `~/.skillet/trash/` and `~/.skillet/journal.jsonl`.
 A Bun workspace with two packages.
 
 ```
-server/                    Bun + Hono API on port 5181
-  src/registry/            77-agent directory registry, env expansion, install detection
-  src/scan/                frontmatter parsing, directory walking, git reads,
-                           plugin discovery, override reads, the index builder,
-                           the scan orchestrator, the filesystem watcher
-  src/visibility/          the per-agent state and condition rules
-  src/hub/                 typed filesystem steps, preflight guards, the journal,
-                           and one module per operation
-  src/routes/              one file per resource
-web/                       Vite + React 19 SPA on port 5180
-  src/api/                 typed client and server-sent-events subscriber
-  src/components/          sidebar, table, the five detail tabs, plan dialog, palette
-  src/pages/               skills, detail, agents, adopt, trash, settings
+apps/
+├── server/                Bun + Hono API on port 5181
+│   └── src/
+│       ├── registry/      agent paths, environment expansion, install detection
+│       ├── scan/          filesystem, git, plugin, override and watcher logic
+│       ├── visibility/    per-agent states and conditions
+│       ├── hub/           operations, preflight guards, rollback and journal
+│       └── routes/        HTTP resources
+└── web/                   Vite + React 19 SPA on port 5180
+    └── src/
+        ├── api/           typed client and server-sent-events subscriber
+        ├── components/    shared interface components
+        └── pages/         skills, detail, agents, adopt, trash and settings
+quality-tests/             unit and desktop/mobile browser verification
 ```
 
 Design decisions worth knowing:
@@ -313,7 +325,7 @@ curl -s -X POST localhost:5181/api/skills/global%3Apr-reviewer/link \
 
 ## Adding an agent
 
-The registry lives in `server/src/registry/agents.data.ts`, one line per agent:
+The registry lives in `apps/server/src/registry/agents.data.ts`, one line per agent:
 
 ```ts
 ['claude-code', 'Claude Code', '$CLAUDE_CONFIG_DIR/skills', '.claude/skills', '$CLAUDE_CONFIG_DIR', 'claude', '', '']
@@ -327,10 +339,12 @@ To add an agent without editing the source, put it in `customAgents` in `~/.skil
 
 ## Known limitations
 
+- **Agent compatibility has boundaries.** The five-agent invocation editor supports standard skill folders and documented settings. Copying preserves resources but does not translate agent-specific instructions or dependencies. Pi custom discovery, Cursor remote availability, and OpenCode V2 permissions are not fully supported. See the [0.0.7 compatibility guide](docs/product/Skillet-0.0.7-agent-compatibility.md) for tested behavior and runtime limits.
+
 - **New directories need a rescan.** The watcher watches the skill directories it has already discovered, not entire project roots, because watching thousands of directories starves the event loop. Create a brand-new `.claude/skills` folder and press **Rescan** to see it.
 - **Undo leaves empty directories.** Undoing a link removes the symlink but not a directory that was created to hold it.
 - **`/api/index` is large**, a megabyte or two, because it embeds every skill body. Fine over localhost.
-- **The JavaScript bundle is not code-split**, roughly 900 kB, mostly the editor.
+- **The skill detail route is lazy-loaded**, including its editor. Measure the current production output before relying on older bundle-size figures.
 - **Moving files across filesystems fails.** The move step uses `rename`, which cannot cross devices.
 - **Single user, no auth.** Localhost only, by design.
 
@@ -340,12 +354,13 @@ To add an agent without editing the source, put it in `customAgents` in `~/.skil
 
 ```bash
 bun install
-cd server && bunx tsc -p tsconfig.json    # typecheck the API
-cd web    && bunx tsc -p tsconfig.json    # typecheck the app
-bun run build                             # production build
+bun run typecheck
+bun run test:unit
+bun run build
+bun run test:browser
 ```
 
-There are no tests, deliberately: this codebase is verified by running it against a real machine and comparing its output to the filesystem. The design document and the full implementation plan, including the verification procedure, are in `docs/superpowers/`.
+The unit suite covers deterministic parsing behavior. Browser checks exercise read-only flows against a real local scan on desktop and mobile. Filesystem mutation behavior is still verified manually against an isolated fixture directory. The design document and the full implementation plan, including the original verification procedure, are in `docs/superpowers/`.
 
 House style, enforced by review rather than a linter: no code comments, no ternary assignment outside JSX rendering, no `.filter().map()` chains, no `await` inside a loop except in the ordered filesystem transaction and the two directory walkers, `async` functions wrap their body in a try/catch that rethrows a `SkilletError` carrying message, method, service and cause, no explicit `any`, and every file under 500 lines.
 

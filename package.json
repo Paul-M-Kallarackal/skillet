@@ -1,15 +1,34 @@
 {
-  "name": "skillet",
+  "name": "skillet-workspace",
   "private": true,
-  "workspaces": ["server", "web"],
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "bun@1.3.14",
+  "workspaces": ["apps/*"],
   "scripts": {
     "dev": "bun run --filter '*' dev",
-    "dev:server": "bun run --cwd server dev",
-    "dev:web": "bun run --cwd web dev",
-    "build": "bun run --cwd web build",
-    "start": "bun run --cwd server start"
+    "dev:server": "bun run --cwd apps/server dev",
+    "dev:web": "bun run --cwd apps/web dev",
+    "build": "bun run --cwd apps/web build",
+    "start": "bun run --cwd apps/server start",
+    "lint": "eslint apps quality-tests",
+    "typecheck": "bun run --cwd apps/server typecheck && bun run --cwd apps/web typecheck",
+    "deadcode": "knip",
+    "test:unit": "vitest run",
+    "test:browser": "bun run build && playwright test",
+    "quality": "bun run lint && bun run typecheck && bun run deadcode && bun run test:unit && bun run build"
   },
   "devDependencies": {
-    "typescript": "^5.9.2"
+    "@axe-core/playwright": "^4.13.0",
+    "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.63.0",
+    "eslint": "^9.39.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "knip": "^6.35.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.63.0",
+    "vitest": "^4.1.0"
   }
 }

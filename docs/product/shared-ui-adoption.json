@@ -1,0 +1,18 @@
+{
+  "revision": "0.0.9",
+  "libraryVersion": "0.0.6",
+  "theme": "lemon",
+  "source": "Components/patterns/shared-ui/themes/tokens.json",
+  "paper": [
+    "https://app.paper.design/file/01M2AKV284AA8XMEQBNBRZV0CQ/6-0",
+    "https://app.paper.design/file/01M2AKV284AA8XMEQBNBRZV0CQ/8-0"
+  ],
+  "copiedStylesheet": "apps/web/src/styles/shared-ui.css",
+  "nativeComponents": [
+    "Chip",
+    "IconButton",
+    "Badge",
+    "Dialog"
+  ],
+  "notes": "System sans-serif follows repository guidance. Paper templates adapted to native React/HTML semantics; no external runtime imports."
+}
