@@ -31,15 +31,15 @@ test('agent chips use a plain install confirmation and keep its footer inset', a
   expect(actions).toEqual([true, true]);
 });
 
-test('Global chip confirms one all-agent installation', async ({ page }) => {
+test('All agents chip confirms one installation across the configured agents', async ({ page }) => {
   const requests: boolean[] = [];
   await page.route('**/api/skills/example/install-all', (route) => { requests.push(route.request().postDataJSON().dryRun); return route.fulfill({ json: { steps: [], applied: false } }); });
   await page.goto('/skills');
   await page.getByRole('button', { name: 'Manage visibility', exact: true }).click();
   const manage = page.getByRole('dialog', { name: 'Manage example', exact: true });
-  await manage.getByRole('button', { name: 'Global', exact: true }).click();
+  await manage.getByRole('button', { name: 'All agents', exact: true }).click();
   const confirm = page.getByRole('dialog', { name: 'Install example globally?', exact: true });
-  await expect(confirm).toContainText('every known agent across all projects');
+  await expect(confirm).toContainText('all listed agents across all projects');
   expect(requests).toEqual([true]);
   await confirm.getByRole('button', { name: 'Install', exact: true }).click();
   await expect(confirm).not.toBeVisible();

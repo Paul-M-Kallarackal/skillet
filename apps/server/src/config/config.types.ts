@@ -7,5 +7,4 @@ export interface SkilletConfig {
   ignoreDirs: string[];
   showAllAgents: boolean;
   customAgents: AgentDefinition[];
-  scanRuntimeDirs: boolean;
 }

@@ -326,7 +326,7 @@ export async function moveSkill(input: MoveInput): Promise<OpResult> {
 
     const destinationRepoId = repoIdForPath(destination);
     for (const instance of skill.instances) {
-      if (instance.kind !== 'symlink') {
+      if (instance.kind !== 'symlink' || instance.symlinkTarget !== canonical.absPath || instance.scope === 'plugin') {
         continue;
       }
       const useRelative = shouldUseRelative(destination, destinationRepoId, instance.absPath);
@@ -341,7 +341,7 @@ export async function moveSkill(input: MoveInput): Promise<OpResult> {
       const sourceLink = join(dirname(canonical.absPath), skill.name);
       const useRelative = shouldUseRelative(destination, destinationRepoId, sourceLink);
       steps.push(symlinkStep(destination, sourceLink, useRelative, `leave link at ${sourceLink}`));
-      inverse.push(step('unlink', '', sourceLink, 'remove source link'));
+      inverse.unshift(step('unlink', '', sourceLink, 'remove source link'));
     }
 
     if (input.dryRun) {

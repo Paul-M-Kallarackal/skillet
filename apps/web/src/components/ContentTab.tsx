@@ -55,7 +55,7 @@ export function ContentTab(props: { skill: Skill }) {
     }
   }, [props.skill, instanceId]);
 
-  const readOnly = props.skill.scope === 'plugin';
+  const readOnly = props.skill.instances.find((instance) => instance.id === instanceId)?.scope === 'plugin';
 
   const preview = () => {
     if (!frontmatter) {
@@ -91,7 +91,7 @@ export function ContentTab(props: { skill: Skill }) {
   const trash = () => {
     setBusy(true);
     api
-      .trash(props.skill.id, { dryRun: false })
+      .trash(props.skill.id, { instanceId, dryRun: false })
       .then(() => {
         setOperation(null); setPlan([]);
         refresh();
@@ -104,7 +104,7 @@ export function ContentTab(props: { skill: Skill }) {
   const prepare = async (action: 'trash') => {
     setBusy(true); setFailure('');
     try {
-      const result = await api.trash(props.skill.id, { dryRun: true });
+      const result = await api.trash(props.skill.id, { instanceId, dryRun: true });
       setPlan(result.steps); setOperation(action);
     } catch (cause) { setFailure(errorMessage(cause, 'Could not prepare this change. Nothing was applied.')); }
     finally { setBusy(false); }
@@ -151,7 +151,6 @@ export function ContentTab(props: { skill: Skill }) {
       <div className="instructions-toolbar"><strong>Instructions</strong><button onClick={() => setEditing(!editing)}>{editing ? 'Preview' : 'Edit Markdown'}</button></div>
       {editing ? <Suspense fallback={<p>Loading editor…</p>}><BodyEditor value={body} onChange={(value) => { dirtyRef.current = true; setBody(value); }} readOnly={readOnly} /></Suspense> : <div ref={previewRef} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setExpanded(false); }} className={`markdown-preview${expanded ? ' expanded' : ''}`}>
         {/* Keyboard users can scroll the expanded reader. */}
-        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
         <div className="markdown-reader" role="region" aria-label="Skill instructions preview" tabIndex={expanded ? 0 : -1}><MarkdownView value={body} /></div>
         <button className="markdown-expand" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}><span className="button-content">{expanded ? 'Collapse instructions' : 'Read full instructions'}{expanded ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}</span></button>
       </div>}

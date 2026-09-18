@@ -104,6 +104,7 @@ export async function trashSkill(input: TrashInput): Promise<OpResult> {
     }
     const canonical = input.instanceId ? skill.instances.find((instance) => instance.id === input.instanceId) : requireCanonical(skill);
     if (!canonical) throw new SkilletError({ message: 'Installation not found', method: 'trashSkill', service: SERVICE, error: null, status: 404 });
+    if (canonical.scope === 'plugin') throw new SkilletError({ message: 'plugin skills are read-only', method: 'trashSkill', service: SERVICE, error: null, code: 'PLUGIN_READONLY', status: 400 });
     await assertNotPlugin(canonical.absPath);
     await assertRealDir(canonical.absPath);
     await assertInsideRoots([canonical.absPath]);
@@ -118,7 +119,7 @@ export async function trashSkill(input: TrashInput): Promise<OpResult> {
 
     const symlinks: SkillInstance[] = [];
     for (const instance of skill.instances) {
-      if (instance.kind === 'symlink' && (!input.instanceId || instance.symlinkTarget === canonical.absPath)) {
+      if (instance.kind === 'symlink' && instance.scope !== 'plugin' && instance.symlinkTarget === canonical.absPath) {
         symlinks.push(instance);
       }
     }

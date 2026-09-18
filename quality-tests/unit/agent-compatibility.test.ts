@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'bun:test';
 import { codexConfig, codexPolicy, openCodePermission, parseSettings } from '../../apps/server/src/hub/agent-settings';
 import { readOpenCodePolicy, openCodeAccess } from '../../apps/server/src/scan/opencode-policy';
 import { DEFAULT_CONFIG } from '../../apps/server/src/config/config.constants';
-import { resolveAgents, readersForGlobalDir, readersForProjectDir } from '../../apps/server/src/registry/agents';
+import { expandPath, globalSkillDirs, projectSkillDirNames, resolveAgents, readersForGlobalDir, readersForProjectDir } from '../../apps/server/src/registry/agents';
 import { computeCells } from '../../apps/server/src/visibility/visibility';
 import { parseSkillFile } from '../../apps/server/src/scan/frontmatter';
 import type { Skill, } from '../../apps/server/src/scan/index.types';
@@ -18,7 +18,24 @@ function agent(id: string): Agent {
 const overrides = { claudeGlobal: {}, claudeByRepo: {}, codexDisabled: [] };
 
 describe('agent-specific visibility', () => {
-  it.each([['codex','auto'],['claude-code','off'],['pi','user-only'],['cursor','user-only'],['opencode','auto'],['other','unknown']])('%s uses only its supported invocation fields', (id, state) => {
+  it('limits default discovery and transfer destinations to the five supported agents', async () => {
+    const agents = await resolveAgents(DEFAULT_CONFIG);
+    expect(agents.map((entry) => entry.id)).toEqual(['claude-code', 'codex', 'cursor', 'opencode', 'pi']);
+    expect(readersForGlobalDir(agents, expandPath('$HOME/.agents/skills')).sort()).toEqual(['codex', 'cursor', 'opencode', 'pi']);
+    expect(globalSkillDirs(agents)).not.toContain(expandPath('$HOME/.gemini/skills'));
+    expect(globalSkillDirs(agents)).not.toContain(expandPath('$HOME/.grok/skills'));
+    expect(projectSkillDirNames(agents)).not.toContain('.github/skills');
+    expect(readersForProjectDir(agents, '/repo', '/repo/.windsurf/skills')).toEqual([]);
+  });
+  it('keeps an explicitly configured custom agent without restoring the broad registry', async () => {
+    const custom = { ...agent('custom-tool'), globalDir: '/fixture/custom/skills', projectDir: '.custom/skills', detect: [] };
+    const agents = await resolveAgents({ ...DEFAULT_CONFIG, customAgents: [custom] });
+    expect(agents).toHaveLength(6);
+    expect(agents.find((entry) => entry.id === custom.id)?.custom).toBe(true);
+    expect(readersForGlobalDir(agents, '/fixture/custom/skills')).toEqual(['custom-tool']);
+    expect(readersForProjectDir(agents, '/repo', '/repo/.custom/skills')).toEqual(['custom-tool']);
+  });
+  it.each([['codex','auto'],['claude-code','off'],['pi','user-only'],['cursor','user-only'],['opencode','auto'],['other','unknown']] as const)('%s uses only its supported invocation fields', (id, state) => {
     const cell = computeCells(skill, [agent(id)], [], overrides, false)[0];
     expect(cell?.state).toBe(state);
     expect(cell?.conditions.some((text) => text === 'editing src/**')).toBe(['claude-code','cursor'].includes(id));

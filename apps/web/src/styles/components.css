@@ -22,7 +22,6 @@
 .card-open::after { content: ''; position: absolute; inset: 0; border-radius: var(--ui-radius-card); }
 .card-open:hover, .card-open:active { background: transparent; transform: none; }
 .card-open:focus-visible { outline: none; }
-.skill-flags:empty { display: none; }
 .skill-card-copy p { line-height: 20px; }
 .skill-card-copy h2 { margin-bottom: 6px; line-height: 25px; }
 .skill-slug { font-size: 12px; margin-bottom: 14px; }
@@ -30,13 +29,7 @@
 .dialog-header h2 { font-size: var(--ui-font-title); line-height: var(--ui-line-title); font-weight: 600; }
 .dialog-header p { font-size: 13px; margin-top: 4px; }
 .dialog-body { padding-top: 20px; }
-.dialog-body .scan-setup { display: grid; gap: 20px; background: transparent; }
-.dialog-body .scan-setup > button { justify-self: end; }
 .dialog-actions { border-top: 1px solid var(--border); padding-top: 16px; }
-.tabs { gap: 16px; padding-bottom: 0; }
-.tab { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding-inline: 4px; }
-.tab.active { background: transparent; border-color: var(--ui-selection-border); color: var(--ui-on-selection); }
-.tabs .tab:hover { background: transparent; color: var(--text); }
 label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { min-height: 44px; }
 input[type="checkbox"] { appearance: none; display: inline-grid; place-content: center; margin: 0; width: 20px; height: 20px; min-height: 20px; flex-shrink: 0; border: 1px solid var(--ui-border-control); border-radius: 4px; background: var(--ui-surface); }
 input[type="checkbox"]:checked { background: var(--ui-selection); border-color: var(--ui-selection-border); }
@@ -50,9 +43,6 @@ input:disabled, select:disabled, textarea:disabled { background: var(--ui-disabl
 .page-count { border: 0; background: var(--ui-neutral-chip); border-radius: var(--ui-radius-chip); font: 500 12px/24px var(--font); padding: 0 8px; }
 .page-eyebrow { display: none; }
 .sidebar-brand { min-height: 56px; border: 0; margin-bottom: 12px; }
-.sidebar-brand-name { font-size: 22px; }
-.sidebar-brand-kicker { display: none; }
-.sidebar-mark { display: none; }
 .sidebar-group-label { font-size: 12px; text-transform: none; letter-spacing: normal; font-weight: 500; }
 .sidebar-count { font-family: var(--font); font-size: 12px; }
 .sidebar-meta { font: 12px/20px var(--font); }
@@ -61,19 +51,15 @@ input:disabled, select:disabled, textarea:disabled { background: var(--ui-disabl
 .sharing-agent { padding: 0; border: 0; font-size: 12px; }
 .sharing-agent strong { padding: 2px 8px; background: var(--ui-neutral-chip); border-radius: var(--ui-radius-chip); }
 .sharing-destination select { width: 100%; }
-.sharing-buttons { border-top: 1px solid var(--border); padding-top: 16px; }
 .sharing-note { line-height: 19px; }
 .inline-feedback { padding: 4px 0; border: 0; font-size: 13px; }
 .inline-feedback[role="alert"] { background: transparent; color: var(--ui-danger-text); }
 .is-spinning { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (max-width: 767px) {
-  .invocation-panel { padding: 20px; }
-  .tabs { gap: 8px; }
   .skill-card.surface { min-height: 190px; }
   .sidebar-brand { margin-bottom: 0; }
   .control-tooltip { max-width: 160px; }
-  .category-filters button { min-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) { .is-spinning { animation: none; } .skill-card { transition: none; } }
 @media (forced-colors: active) { input[type="checkbox"] { appearance: auto; } input[type="checkbox"]::after { display: none; } }
@@ -110,12 +96,8 @@ input:disabled, select:disabled, textarea:disabled { background: var(--ui-disabl
 .skill-markdown table { display: block; overflow: auto; border-collapse: collapse; }
 .skill-markdown th, .skill-markdown td { border: 1px solid var(--border); padding: 8px 12px; }
 .skill-markdown blockquote { border-left: 3px solid var(--border-strong); padding-left: 16px; margin-left: 0; }
-.advanced-settings summary, .skill-advanced-actions summary { cursor: pointer; padding: 10px 0; color: var(--text-muted); }
-.advanced-fields { display: grid; gap: 16px; padding: 12px 0; }
-.skill-advanced-actions { margin: 12px 0; }
 .content-savebar { position: sticky; bottom: 0; z-index: 3; display: flex; justify-content: flex-end; align-items: center; gap: 16px; padding: 16px 0; border-top: 1px solid var(--border); background: var(--ui-surface, #fff); }
 .repository-picker { display: grid; gap: 12px; }
-.agent-undetected { margin-left: auto; font-size: 11px; color: var(--text-muted); }
 @media (max-width: 600px) { .skill-detail-dialog > .dialog-header { padding: 20px; } .skill-detail-dialog > .dialog-body { padding: 20px 20px 0; } .markdown-reader { padding: 20px; } }
 
 .sharing-controls { padding-bottom: 24px; }
@@ -128,8 +110,6 @@ input:disabled, select:disabled, textarea:disabled { background: var(--ui-disabl
 }
 
 .agent-access h3 { font-size: 14px; margin: 0 0 12px; }
-.skill-locations { padding-bottom: 24px; }
-.skill-locations summary { padding: 12px 0; cursor: pointer; }
 
 /* All selects share the same native control and a dedicated chevron gutter. */
 .ui-select { position: relative; display: block; width: 100%; min-width: 0; max-width: 100%; }
@@ -157,12 +137,6 @@ input:disabled, select:disabled, textarea:disabled { background: var(--ui-disabl
 .skill-detail-dialog > .dialog-body { padding: 24px 32px 0; }
 @media (max-width: 600px) { .skill-detail-dialog > .dialog-body { padding: 20px 20px 0; } }
 
-.usage-choices { display: grid; gap: 12px; padding: 0; border: 0; }
-.usage-choices legend { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
-.usage-choice { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; }
-.usage-choice > span { display: grid; gap: 6px; }
-.usage-choice:has(input:checked) { border-color: var(--ui-selection-border); background: var(--ui-selection); }
-.usage-choice input { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--ui-selection-border); }
 
 .sidebar-skillet { width: 44px; height: 44px; object-fit: contain; flex-shrink: 0; }
 

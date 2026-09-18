@@ -1,15 +1,14 @@
 import { parseDocument } from 'yaml';
 import { readOptional, record } from '../hub/agent-settings';
-import { createHash } from 'node:crypto';
 import type { Dirent } from 'node:fs';
 import { lstat, readdir, readFile, readlink, realpath, stat } from 'node:fs/promises';
-import { join, relative, resolve, sep } from 'node:path';
+import { join, resolve } from 'node:path';
 import { SkilletError } from '../errors';
 import { parseSkillFile } from './frontmatter';
+import { fingerprint } from './fingerprint';
 import type { BuildInstanceInput, GitState, SkillDirRef, SkillInstance } from './walk.types';
 
 const SERVICE = 'WalkService';
-const NOISE_FILES = ['.DS_Store'];
 
 export async function readSkillDirs(parentDir: string): Promise<SkillDirRef[]> {
   try {
@@ -70,36 +69,6 @@ export async function readSkillDirs(parentDir: string): Promise<SkillDirRef[]> {
   }
 }
 
-async function listFiles(root: string): Promise<string[]> {
-  const out: string[] = [];
-  const queue: string[] = [root];
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current) {
-      break;
-    }
-    let entries: Dirent[] = [];
-    try {
-      entries = await readdir(current, { withFileTypes: true });
-    } catch {
-      continue;
-    }
-    for (const entry of entries) {
-      if (NOISE_FILES.includes(entry.name)) {
-        continue;
-      }
-      const abs = join(current, entry.name);
-      if (entry.isDirectory()) {
-        queue.push(abs);
-        continue;
-      }
-      out.push(relative(root, abs).split(sep).join('/'));
-    }
-  }
-  out.sort();
-  return out;
-}
-
 export async function buildInstance(input: BuildInstanceInput): Promise<SkillInstance> {
   try {
     const skillPath = join(input.ref.absPath, 'SKILL.md');
@@ -126,10 +95,7 @@ export async function buildInstance(input: BuildInstanceInput): Promise<SkillIns
         policyError = 'Cannot read Codex invocation policy. Repair agents/openai.yaml.';
       }
     }
-    const files = await listFiles(input.ref.absPath);
-    const hash = createHash('sha256');
-    hash.update(raw);
-    hash.update(files.join('\n'));
+    const { files, contentHash } = await fingerprint(input.ref.absPath);
     let kind: SkillInstance['kind'] = 'canonical';
     if (input.scope === 'plugin') {
       kind = 'plugin';
@@ -158,7 +124,7 @@ export async function buildInstance(input: BuildInstanceInput): Promise<SkillIns
       symlinkTarget: resolvedTarget,
       codexImplicitAllowed,
       policyError,
-      contentHash: hash.digest('hex').slice(0, 16),
+      contentHash,
       frontmatter: parsed.frontmatter,
       body: parsed.body,
       files,

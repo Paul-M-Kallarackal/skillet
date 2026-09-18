@@ -7,6 +7,7 @@ import { IconButton } from './IconButton';
 import { Dialog } from './Dialog';
 import { SkillSharingActions } from './SkillSharingActions';
 import { presentSkill } from './skill-presentation';
+import { canAgentReadSkill } from './skill-access';
 import type { Agent, Skill, VisibilityCell } from '../api/client.types';
 
 export function SkillCards({ skills, cells, agents, emptyMessage = 'No skills match this view.' }: { skills: Skill[]; cells: Record<string, VisibilityCell[]>; agents: Agent[]; emptyMessage?: string | undefined }) {
@@ -19,7 +20,7 @@ export function SkillCards({ skills, cells, agents, emptyMessage = 'No skills ma
         {skills.map((skill) => {
           const canonical = skill.instances.find((instance) => instance.id === skill.canonicalId);
           const presentation = presentSkill(skill);
-          const readers = agents.filter((agent) => skill.instances.some((instance) => instance.readers?.includes(agent.id)) || cells[skill.id]?.some((cell) => cell.agentId === agent.id && !['not-linked', 'n-a', 'off'].includes(cell.state)));
+          const readers = agents.filter((agent) => canAgentReadSkill(skill.instances, cells[skill.id] ?? [], agent.id));
           const supported = agents.filter((agent) => agent.resolvedGlobalDir);
           const allAgents = supported.length > 0 && supported.every((agent) => readers.some((reader) => reader.id === agent.id));
           const priority = ['codex', 'claude-code', 'cursor'];

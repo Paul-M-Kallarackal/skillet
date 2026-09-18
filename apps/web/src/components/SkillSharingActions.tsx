@@ -7,7 +7,6 @@ import { AgentIcon } from './AgentIcon';
 import { ConfirmDialog } from './ConfirmDialog';
 import { RepositoryPicker } from './RepositoryPicker';
 import { Select } from './Select';
-import { isCommonAgent } from './common-agents';
 
 export function SkillSharingActions({ skill, cells }: { skill: Skill; cells: VisibilityCell[] }) {
   const { index, refresh } = useIndex();
@@ -17,9 +16,8 @@ export function SkillSharingActions({ skill, cells }: { skill: Skill; cells: Vis
   const [failure, setFailure] = useState('');
   const [message, setMessage] = useState('');
   const [pending, setPending] = useState<{ title: string; description: string; action: string; run: () => Promise<OpResult> } | null>(null);
-  const related = (index?.skills ?? [skill]).filter((entry) => entry.id === skill.id || (entry.name === skill.name && entry.instances.some((copy) => copy.contentHash && skill.instances.some((source) => source.contentHash === copy.contentHash))));
-  const installations = related.flatMap((entry) => entry.instances.map((instance) => ({ ...instance, ownerSkillId: entry.id })));
-  const agents = index?.agents.filter((agent) => agent.installed || agent.custom || isCommonAgent(agent.id)) ?? [];
+  const installations = skill.instances.map((instance) => ({ ...instance, ownerSkillId: skill.id }));
+  const agents = index?.agents ?? [];
 
   async function stage(title: string, description: string, operation: (dryRun: boolean) => Promise<OpResult>, action = 'Install') {
     setBusy(true); setFailure(''); setMessage('');
@@ -68,9 +66,9 @@ export function SkillSharingActions({ skill, cells }: { skill: Skill; cells: Vis
             }
           }}><AgentIcon id={agent.id} name={agent.name} decorative /><span>{agent.name}</span></button>;
       })}
-      <button type="button" className="agent-access-toggle" disabled={busy} title="Install for every known agent across all projects" onClick={() => void stage(
-        `Install ${skill.name} globally?`, 'Install for every known agent across all projects? Existing installations will be kept.', (dryRun) => api.installAll(skill.id, dryRun)
-      )}><Globe size={18} aria-hidden="true" /><span>Global</span></button>
+      <button type="button" className="agent-access-toggle" disabled={busy} title="Install for all listed agents across all projects" onClick={() => void stage(
+        `Install ${skill.name} globally?`, 'Install for all listed agents across all projects? Existing installations will be kept.', (dryRun) => api.installAll(skill.id, dryRun)
+      )}><Globe size={18} aria-hidden="true" /><span>All agents</span></button>
     </div></div>
 
     {pending ? <ConfirmDialog title={pending.title} description={pending.description} action={pending.action} busy={busy} error={failure} onConfirm={() => void confirm()} onCancel={() => { setPending(null); setFailure(''); }} /> : null}

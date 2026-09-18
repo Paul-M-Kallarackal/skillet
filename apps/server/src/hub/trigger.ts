@@ -39,7 +39,7 @@ function requireInstance(skillId: string, agentId: string): SkillInstance {
       throw settingsError('Plugin-managed skills are read-only. Make an independent copy first.');
     }
     for (const instance of skill.instances) {
-      if (instance.readers.includes(agentId)) {
+      if (instance.scope !== 'plugin' && instance.readers.includes(agentId)) {
         return instance;
       }
     }
@@ -143,6 +143,7 @@ export async function setSkillInvocation(input: { skillId: string; automatic: bo
   const inverse: FsStep[] = [];
   const seen = new Set<string>();
   for (const instance of skill.instances) {
+    if (instance.scope === 'plugin') continue;
     const dir = await realpath(instance.absPath);
     if (seen.has(dir)) continue;
     seen.add(dir);

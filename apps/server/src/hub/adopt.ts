@@ -1,7 +1,7 @@
-import { basename, join } from 'node:path';
+import { join } from 'node:path';
+import { createHash, randomUUID } from 'node:crypto';
 import { loadConfig } from '../config/config';
 import { SkilletError } from '../errors';
-import type { Skill } from '../scan/index.types';
 import { getIndex } from '../scan/scanner';
 import type { SkillInstance } from '../scan/walk.types';
 import { appendEntry } from './journal';
@@ -12,21 +12,26 @@ import type { FsStep, OpResult } from './steps.types';
 
 const SERVICE = 'AdoptService';
 
+function globalInstancesByName(): Map<string, SkillInstance[]> {
+  const groups = new Map<string, SkillInstance[]>();
+  for (const skill of getIndex().skills) {
+    const globals = skill.instances.filter((instance) => instance.scope === 'global');
+    if (globals.length) groups.set(skill.name, [...(groups.get(skill.name) ?? []), ...globals]);
+  }
+  return groups;
+}
+
 export async function planAdopt(): Promise<AdoptPlan> {
   try {
     const config = await loadConfig();
-    const index = getIndex();
     const groups: AdoptGroup[] = [];
 
-    for (const skill of index.skills) {
-      if (skill.scope !== 'global') {
-        continue;
-      }
+    for (const [name, instances] of globalInstancesByName()) {
       const candidates: AdoptCandidate[] = [];
       const hashes: string[] = [];
       let alreadyInHub = false;
       let suggested = '';
-      for (const instance of skill.instances) {
+      for (const instance of instances) {
         if (instance.isHub) {
           alreadyInHub = true;
           suggested = instance.id;
@@ -38,13 +43,14 @@ export async function planAdopt(): Promise<AdoptPlan> {
           readers: instance.readers,
           isSymlink: instance.kind === 'symlink'
         });
-        if (instance.kind !== 'symlink' && !hashes.includes(instance.contentHash)) {
-          hashes.push(instance.contentHash);
+        const fingerprint = instance.contentHash || instance.id;
+        if (instance.kind !== 'symlink' && !hashes.includes(fingerprint)) {
+          hashes.push(fingerprint);
         }
       }
       if (suggested.length === 0) {
         let best: SkillInstance | null = null;
-        for (const instance of skill.instances) {
+        for (const instance of instances) {
           if (instance.kind === 'symlink') {
             continue;
           }
@@ -61,7 +67,7 @@ export async function planAdopt(): Promise<AdoptPlan> {
         }
       }
       groups.push({
-        name: skill.name,
+        name,
         candidates,
         hashes,
         conflict: hashes.length > 1,
@@ -89,28 +95,23 @@ export async function planAdopt(): Promise<AdoptPlan> {
 export async function applyAdopt(decisions: AdoptDecision[]): Promise<OpResult> {
   try {
     const config = await loadConfig();
-    const index = getIndex();
     const byInstanceId = new Map<string, SkillInstance>();
-    const globalByName = new Map<string, Skill>();
-    for (const skill of index.skills) {
-      if (skill.scope === 'global') {
-        globalByName.set(skill.name, skill);
-      }
-      for (const instance of skill.instances) {
-        byInstanceId.set(instance.id, instance);
-      }
+    const globalByName = globalInstancesByName();
+    for (const instances of globalByName.values()) {
+      for (const instance of instances) byInstanceId.set(instance.id, instance);
     }
 
     const steps: FsStep[] = [];
     const inverse: FsStep[] = [];
     steps.push(step('mkdir', '', config.hubPath, 'ensure hub'));
 
+    const backupId = randomUUID();
     const freeChecks: string[] = [];
     const rootChecks: string[] = [];
 
     for (const decision of decisions) {
       const winner = byInstanceId.get(decision.winnerInstanceId);
-      if (!winner) {
+      if (!winner || winner.name !== decision.name || winner.kind === 'symlink') {
         throw new SkilletError({
           message: `winner instance not found: ${decision.winnerInstanceId}`,
           method: 'applyAdopt',
@@ -127,15 +128,17 @@ export async function applyAdopt(decisions: AdoptDecision[]): Promise<OpResult> 
       if (!winner.isHub) {
         freeChecks.push(hubTarget);
         steps.push(step('move', winner.absPath, hubTarget, `adopt ${decision.name} into hub`));
-        inverse.push(step('move', hubTarget, winner.absPath, `undo adopt ${decision.name}`));
+        inverse.unshift(step('move', hubTarget, winner.absPath, `undo adopt ${decision.name}`));
+        steps.push(symlinkStep(hubTarget, winner.absPath, false, 'link original installation to hub'));
+        inverse.unshift(step('unlink', '', winner.absPath, 'remove adopted source link'));
       }
 
-      const skill = globalByName.get(decision.name);
-      if (!skill) {
+      const instances = globalByName.get(decision.name);
+      if (!instances) {
         continue;
       }
 
-      for (const instance of skill.instances) {
+      for (const instance of instances) {
         if (instance.id === winner.id) {
           continue;
         }
@@ -144,17 +147,19 @@ export async function applyAdopt(decisions: AdoptDecision[]): Promise<OpResult> 
         }
         if (instance.kind === 'symlink') {
           steps.push(step('unlink', '', instance.absPath, `drop stale link ${instance.absPath}`));
-          inverse.push(symlinkStep(instance.symlinkTarget, instance.absPath, false, `restore link ${instance.absPath}`));
+          inverse.unshift(symlinkStep(instance.symlinkTarget, instance.absPath, false, `restore link ${instance.absPath}`));
           steps.push(symlinkStep(hubTarget, instance.absPath, false, `relink ${instance.absPath}`));
-          inverse.push(step('unlink', '', instance.absPath, `remove relink ${instance.absPath}`));
+          inverse.unshift(step('unlink', '', instance.absPath, `remove relink ${instance.absPath}`));
           continue;
         }
-        const backupDir = join(config.hubPath, '.adopt-backup', decision.name, basename(instance.parentDir));
+        const location = createHash('sha256').update(instance.absPath).digest('hex');
+        const backupDir = join(config.hubPath, '.adopt-backup', backupId, location);
+        freeChecks.push(join(backupDir, decision.name));
         steps.push(step('mkdir', '', backupDir, 'ensure adopt backup dir'));
         steps.push(step('move', instance.absPath, join(backupDir, decision.name), `back up duplicate ${instance.absPath}`));
-        inverse.push(step('move', join(backupDir, decision.name), instance.absPath, `restore duplicate ${instance.absPath}`));
+        inverse.unshift(step('move', join(backupDir, decision.name), instance.absPath, `restore duplicate ${instance.absPath}`));
         steps.push(symlinkStep(hubTarget, instance.absPath, false, `link ${instance.absPath}`));
-        inverse.push(step('unlink', '', instance.absPath, `remove link ${instance.absPath}`));
+        inverse.unshift(step('unlink', '', instance.absPath, `remove link ${instance.absPath}`));
       }
     }
 

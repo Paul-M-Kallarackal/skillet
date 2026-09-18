@@ -1,0 +1,3 @@
+[test]
+# Keep Playwright specs out of Bun test discovery.
+root = "quality-tests/unit"

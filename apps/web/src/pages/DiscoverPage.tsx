@@ -64,7 +64,6 @@ export function DiscoverPage() {
         <details><summary>{preview.files.length} files · View contents</summary><ul>{preview.files.map((file) => <li key={file}>{file}</li>)}</ul></details>
         <details open><summary>Skill instructions</summary>
           {/* Keyboard users need to focus this scrollable instruction region. */}
-          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
           <div role="region" aria-label="Skill instruction content" className="catalog-instructions" tabIndex={0}>{preview.instructions}</div>
         </details>
         <p className="catalog-note">The complete skill folder is added to your hub. You can share it with agents from the library.</p>

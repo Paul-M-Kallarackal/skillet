@@ -27,6 +27,5 @@ export const DEFAULT_CONFIG: SkilletConfig = {
   maxDepth: 6,
   ignoreDirs: DEFAULT_IGNORE_DIRS,
   showAllAgents: false,
-  customAgents: [],
-  scanRuntimeDirs: true
+  customAgents: []
 };

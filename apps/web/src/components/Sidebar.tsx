@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useIndex } from '../app/IndexProvider';
 import { AgentIcon } from './AgentIcon';
-import { isCommonAgent } from './common-agents';
 
 export function Sidebar() {
   const [navigationOpen, setNavigationOpen] = useState(false);
@@ -19,8 +18,6 @@ export function Sidebar() {
 
   if (!index) return <aside className="sidebar" aria-label="Primary navigation" />;
 
-  const installedAgents = index.agents.filter((agent) => agent.installed || agent.custom || isCommonAgent(agent.id));
-
   return (
     <aside className="sidebar" aria-label="Primary navigation">
       <div className="sidebar-brand">
@@ -29,16 +26,16 @@ export function Sidebar() {
       </div>
       <nav id="skillet-navigation" className="sidebar-navigation" data-open={navigationOpen} aria-label="Workspace">
       
-      <Link className={`sidebar-link${onSkills && noFilter ? ' active' : ''}`} aria-current={onSkills && noFilter ? 'page' : undefined} to="/skills">
+      <Link className={`sidebar-link${onSkills && noFilter ? ' active' : ''}`} aria-current={onSkills && noFilter ? 'page' : undefined} to="/skills" onClick={() => setNavigationOpen(false)}>
         <Boxes aria-hidden="true" /><span className="sidebar-link-label">All skills</span><span className="sidebar-count">{index.skills.length}</span>
       </Link>
-      <Link className={`sidebar-link${location.pathname === '/trash' ? ' active' : ''}`} aria-current={location.pathname === '/trash' ? 'page' : undefined} to="/trash">
+      <Link className={`sidebar-link${location.pathname === '/trash' ? ' active' : ''}`} aria-current={location.pathname === '/trash' ? 'page' : undefined} to="/trash" onClick={() => setNavigationOpen(false)}>
         <Trash2 aria-hidden="true" /><span className="sidebar-link-label">Trash</span>
       </Link>
 
       <div className="sidebar-group-label" title="Filter the list by agent. Use a skill’s Manage visibility control to grant access.">Visible to</div>
       <div className="sidebar-agent-filters">
-      {installedAgents.map((agent) => (
+      {index.agents.map((agent) => (
         <Link className={`sidebar-link agent-filter${activeAgent === agent.id ? ' active' : ''}`} aria-label={agent.name} title={`${agent.name} · ${agent.installed ? 'Detected' : 'Not detected'}`} aria-description={agent.installed ? 'Detected on this machine' : 'Not detected on this machine'} aria-current={activeAgent === agent.id ? 'page' : undefined} key={agent.id} to={`/skills?agent=${encodeURIComponent(agent.id)}`} onClick={() => setNavigationOpen(false)}>
           <AgentIcon id={agent.id} name={agent.name} decorative /><span className="sidebar-link-label">{agent.name}</span><span className={`agent-status-dot ${agent.installed ? 'detected' : 'not-detected'}`} aria-hidden="true" />
         </Link>
@@ -49,13 +46,13 @@ export function Sidebar() {
       <Link className={`sidebar-link${location.pathname === '/discover' ? ' active' : ''}`} aria-current={location.pathname === '/discover' ? 'page' : undefined} to="/discover" onClick={() => setNavigationOpen(false)}>
         <Search aria-hidden="true" /><span className="sidebar-link-label">Find skills</span>
       </Link>
-      <Link className={`sidebar-link${location.pathname === '/agents' ? ' active' : ''}`} aria-current={location.pathname === '/agents' ? 'page' : undefined} to="/agents">
+      <Link className={`sidebar-link${location.pathname === '/agents' ? ' active' : ''}`} aria-current={location.pathname === '/agents' ? 'page' : undefined} to="/agents" onClick={() => setNavigationOpen(false)}>
         <Bot aria-hidden="true" /><span className="sidebar-link-label">All agents</span><span className="sidebar-count">{index.agents.length}</span>
       </Link>
-      <Link className={`sidebar-link${location.pathname === '/adopt' ? ' active' : ''}`} aria-current={location.pathname === '/adopt' ? 'page' : undefined} to="/adopt">
+      <Link className={`sidebar-link${location.pathname === '/adopt' ? ' active' : ''}`} aria-current={location.pathname === '/adopt' ? 'page' : undefined} to="/adopt" onClick={() => setNavigationOpen(false)}>
         <PackageCheck aria-hidden="true" /><span className="sidebar-link-label">Adopt into hub</span>
       </Link>
-      <Link className={`sidebar-link${location.pathname === '/settings' ? ' active' : ''}`} aria-current={location.pathname === '/settings' ? 'page' : undefined} to="/settings">
+      <Link className={`sidebar-link${location.pathname === '/settings' ? ' active' : ''}`} aria-current={location.pathname === '/settings' ? 'page' : undefined} to="/settings" onClick={() => setNavigationOpen(false)}>
         <Settings2 aria-hidden="true" /><span className="sidebar-link-label">Settings</span>
       </Link>
 

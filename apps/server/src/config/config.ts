@@ -34,9 +34,6 @@ function merge(raw: Record<string, unknown>): SkilletConfig {
   if (typeof raw.showAllAgents === 'boolean') {
     merged.showAllAgents = raw.showAllAgents;
   }
-  if (typeof raw.scanRuntimeDirs === 'boolean') {
-    merged.scanRuntimeDirs = raw.scanRuntimeDirs;
-  }
   if (Array.isArray(raw.customAgents)) {
     merged.customAgents = raw.customAgents as SkilletConfig['customAgents'];
   }

@@ -1,17 +1,13 @@
 import type {
   AdoptDecisionInput,
   AdoptPlan,
-  JournalEntry,
   LinkTarget,
   OpResult,
   Repo,
-  Skill,
   SkilletConfig,
   SkilletIndex,
   SkillFrontmatter,
-  TrashEntry,
-  TriggerChanges,
-  VisibilityCell
+  TrashEntry
 } from './client.types';
 
 async function request<T>(path: string, init: RequestInit): Promise<T> {
@@ -68,9 +64,6 @@ export const api = {
   rescan(): Promise<SkilletIndex> {
     return request<SkilletIndex>('/api/rescan', mutateInit('POST'));
   },
-  getSkill(id: string): Promise<{ skill: Skill; cells: VisibilityCell[] }> {
-    return request(`/api/skills/${encodeURIComponent(id)}`, { method: 'GET' });
-  },
   putContent(
     id: string,
     payload: { instanceId: string; frontmatter: SkillFrontmatter; body: string; dryRun: boolean }
@@ -79,12 +72,6 @@ export const api = {
   },
   rename(id: string, payload: { newName: string; dryRun: boolean }): Promise<OpResult> {
     return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/rename`, jsonInit('POST', payload));
-  },
-  link(id: string, payload: { target: LinkTarget; dryRun: boolean }): Promise<OpResult> {
-    return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/link`, jsonInit('POST', payload));
-  },
-  unlink(id: string, payload: { instanceId: string; dryRun: boolean }): Promise<OpResult> {
-    return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/unlink`, jsonInit('POST', payload));
   },
   removeInstallation(id: string, payload: { instanceId: string; dryRun: boolean }): Promise<OpResult> {
     return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/remove-installation`, jsonInit('POST', payload));
@@ -95,21 +82,11 @@ export const api = {
   copy(id: string, payload: { target: LinkTarget; mode: 'link' | 'copy'; dryRun: boolean }): Promise<OpResult> {
     return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/copy`, jsonInit('POST', payload));
   },
-  move(id: string, payload: { target: LinkTarget; keepLinkAtSource: boolean; dryRun: boolean }): Promise<OpResult> {
-    return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/move`, jsonInit('POST', payload));
-  },
-  trash(id: string, payload: { dryRun: boolean }): Promise<OpResult> {
+  trash(id: string, payload: { dryRun: boolean; instanceId?: string }): Promise<OpResult> {
     return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/trash`, jsonInit('POST', payload));
   },
   setInvocation(id: string, payload: { automatic: boolean; dryRun: boolean }): Promise<OpResult> {
     return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/invocation`, jsonInit('POST', payload));
-  },
-  trigger(id: string, payload: { agentId: string; changes: TriggerChanges; dryRun: boolean }): Promise<OpResult> {
-    return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/trigger`, jsonInit('POST', payload));
-  },
-  getDiff(id: string, a: string, b: string): Promise<{ patch: string }> {
-    const query = `a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`;
-    return request(`/api/skills/${encodeURIComponent(id)}/diff?${query}`, { method: 'GET' });
   },
   getTrash(): Promise<{ entries: TrashEntry[] }> {
     return request('/api/trash', { method: 'GET' });
@@ -119,12 +96,6 @@ export const api = {
   },
   purgeTrash(entryId: string): Promise<OpResult> {
     return request<OpResult>(`/api/trash/${encodeURIComponent(entryId)}`, mutateInit('DELETE'));
-  },
-  getJournal(): Promise<{ entries: JournalEntry[] }> {
-    return request('/api/journal', { method: 'GET' });
-  },
-  undo(): Promise<{ entry: JournalEntry }> {
-    return request('/api/journal/undo', mutateInit('POST'));
   },
   getConfig(): Promise<{ config: SkilletConfig }> {
     return request('/api/config', { method: 'GET' });

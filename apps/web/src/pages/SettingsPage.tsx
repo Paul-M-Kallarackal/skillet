@@ -107,7 +107,7 @@ export function SettingsPage() {
           checked={config.showAllAgents}
           onChange={(event) => setConfig({ ...config, showAllAgents: event.target.checked })}
         />
-        <span>Include every known agent in the visibility matrix</span>
+        <span>Show availability for agents not detected on this machine</span>
       </label>
       <div className="settings-actions">
         <button className="primary" onClick={save} disabled={busy}>

@@ -1,23 +1,26 @@
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, mock, setSystemTime, spyOn, type Mock } from 'bun:test';
 import { mkdtemp, readFile, rm, stat, symlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { FsStep } from '../../apps/server/src/hub/steps.types';
 
-const state = vi.hoisted(() => ({ root: '', inverse: [] as FsStep[], journalFail: false }));
-vi.mock('../../apps/server/src/config/config', () => ({ loadConfig: async () => ({ hubPath: state.root }) }));
-vi.mock('../../apps/server/src/hub/journal', () => ({ appendEntry: async (_input: unknown, inverse: FsStep[]) => { if (state.journalFail) throw new Error('journal unavailable'); state.inverse = inverse; } }));
-import { catalogReference, installImport, previewImport, referenceFromLink, searchCatalog } from '../../apps/server/src/catalog/catalog';
+const state = { root: '', inverse: [] as FsStep[], journalFail: false };
+mock.module('../../apps/server/src/config/config', () => ({ loadConfig: async () => ({ hubPath: state.root }) }));
+mock.module('../../apps/server/src/hub/journal', () => ({ appendEntry: async (_input: unknown, inverse: FsStep[]) => { if (state.journalFail) throw new Error('journal unavailable'); state.inverse = inverse; } }));
+// Import after registering mocks so real configuration and journal writes never run.
+const { catalogReference, installImport, previewImport, referenceFromLink, searchCatalog } = await import('../../apps/server/src/catalog/catalog');
 import { applySteps } from '../../apps/server/src/hub/steps';
 
 const sha = 'a'.repeat(40);
 const raw = '---\nname: example\ndescription: Example instructions\n---\n\nRead the reference.';
 let entries: { path: string; type: string; mode: string }[];
-let fetchMock: ReturnType<typeof vi.fn>;
+type FetchRequest = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>;
+let fetchMock: Mock<FetchRequest>;
 beforeEach(async () => {
   state.root = await mkdtemp(join(tmpdir(), 'skillet-catalog-')); state.journalFail = false;
   entries = ['skills/different-folder/SKILL.md', 'skills/different-folder/references/guide.md', 'skills/different-folder/scripts/run.sh', 'skills/different-folder/asset.bin'].map((path) => ({ path, type: 'blob', mode: path.endsWith('.sh') ? '100755' : '100644' }));
-  fetchMock = vi.fn(async (url: string) => {
+  fetchMock = spyOn(globalThis as { fetch: FetchRequest }, 'fetch').mockImplementation(async (input) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     if (url.includes('skills.sh/api/search')) return Response.json({ skills: [{ source: 'owner/repo', skillId: 'example', name: 'example' }] });
     if (url.endsWith('/commits/HEAD')) return Response.json({ sha });
     if (url.includes('/git/trees/')) return Response.json({ tree: entries, truncated: false });
@@ -27,9 +30,8 @@ beforeEach(async () => {
     if (url.endsWith('/asset.bin')) return new Response(new Uint8Array([0, 255, 128]));
     throw new Error(`Unexpected request ${url}`);
   });
-  vi.stubGlobal('fetch', fetchMock);
 });
-afterEach(async () => { vi.unstubAllGlobals(); vi.useRealTimers(); await rm(state.root, { recursive: true, force: true }); });
+afterEach(async () => { mock.restore(); setSystemTime(); await rm(state.root, { recursive: true, force: true }); });
 
 it('searches the public catalog and supports direct links without a remote search', async () => {
   expect(await searchCatalog('react')).toEqual([{ source: 'owner/repo', slug: 'example', name: 'example' }]);
@@ -84,7 +86,7 @@ it('rejects traversal paths and expires stale previews', async () => {
   await expect(previewImport('owner/repo', 'example')).rejects.toThrow(/unsupported/);
   entries.pop();
   const preview = await previewImport('owner/repo', 'example');
-  vi.useFakeTimers(); vi.setSystemTime(Date.now() + 11 * 60_000);
+  setSystemTime(new Date(Date.now() + 11 * 60_000));
   await expect(installImport(preview.token)).rejects.toThrow(/expired/);
 });
 it('rolls back a failed import and allows retry', async () => {

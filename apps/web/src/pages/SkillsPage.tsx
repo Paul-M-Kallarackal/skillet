@@ -6,6 +6,7 @@ import { useIndex } from '../app/IndexProvider';
 import { SkillCards } from '../components/SkillCards';
 import { IconButton } from '../components/IconButton';
 import { presentSkill } from '../components/skill-presentation';
+import { canAgentReadSkill } from '../components/skill-access';
 import { useToast } from '../components/Toaster';
 import type { Skill } from '../api/client.types';
 
@@ -38,15 +39,8 @@ export function SkillsPage() {
     const needle = query.trim().toLowerCase();
     for (const skill of index.skills) {
       if (hubOnly && !skill.instances.some((instance) => instance.isHub)) continue;
-      const identicalGlobal = skill.scope === 'project' && index.skills.some((candidate) => candidate.scope === 'global' && candidate.name === skill.name && !candidate.diverged && skill.instances.every((local) => Boolean(local.contentHash) && candidate.instances.some((global) => global.contentHash === local.contentHash)));
-      if (identicalGlobal && (!scope && !repo && !agent)) continue;
       const presentation = presentSkill(skill);
-      if (scope.length > 0 && skill.scope !== scope) {
-        continue;
-      }
-      if (repo.length > 0 && skill.repoId !== repo) {
-        continue;
-      }
+      if (!skill.instances.some((instance) => (!scope || instance.scope === scope) && (!repo || instance.repoId === repo))) continue;
       if (needle.length > 0) {
         const haystack = `${skill.name} ${skill.description} ${presentation.title} ${presentation.summary}`.toLowerCase();
         if (!haystack.includes(needle)) {
@@ -54,20 +48,8 @@ export function SkillsPage() {
         }
       }
       if (agent.length > 0) {
-        let cells = index.cells[skill.id];
-        if (!cells) {
-          cells = [];
-        }
-        let readable = skill.instances.some((instance) => instance.readers?.includes(agent)) && !cells.some((cell) => cell.agentId === agent && cell.state === 'off');
-        for (const cell of cells) {
-          if (cell.agentId !== agent) {
-            continue;
-          }
-          if (cell.state !== 'not-linked' && cell.state !== 'n-a' && cell.state !== 'off') {
-            readable = true;
-          }
-        }
-        if (!readable) {
+        const matching = skill.instances.filter((instance) => (!scope || instance.scope === scope) && (!repo || instance.repoId === repo));
+        if (!canAgentReadSkill(matching, index.cells[skill.id] ?? [], agent)) {
           continue;
         }
       }
