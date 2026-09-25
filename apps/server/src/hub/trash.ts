@@ -32,7 +32,7 @@ export interface TrashInput {
   dryRun: boolean;
 }
 
-function manifestPath(entryId: string): string {
+export function manifestPath(entryId: string): string {
   return join(TRASH_PATH, entryId, 'skillet-trash.json');
 }
 

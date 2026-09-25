@@ -11,6 +11,7 @@ import type {
   SkillFrontmatter,
   TrashEntry,
   TriggerChanges,
+  UninstallPreview,
   VisibilityCell
 } from './client.types';
 
@@ -134,6 +135,15 @@ export const api = {
   },
   planAdopt(): Promise<AdoptPlan> {
     return request<AdoptPlan>('/api/adopt/plan', mutateInit('POST'));
+  },
+  setPluginEnabled(key: string, payload: { enabled: boolean; dryRun: boolean }): Promise<OpResult> {
+    return request<OpResult>(`/api/plugins/${encodeURIComponent(key)}/enabled`, jsonInit('POST', payload));
+  },
+  uninstallPlugin(key: string, payload: { dryRun: boolean }): Promise<UninstallPreview> {
+    return request<UninstallPreview>(`/api/plugins/${encodeURIComponent(key)}/uninstall`, jsonInit('POST', payload));
+  },
+  cleanPluginCache(payload: { dryRun: boolean }): Promise<OpResult> {
+    return request<OpResult>('/api/plugins/clean-cache', jsonInit('POST', payload));
   },
   applyAdopt(decisions: AdoptDecisionInput[]): Promise<{ result: OpResult }> {
     return request('/api/adopt/apply', jsonInit('POST', { decisions }));

@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { IndexProvider } from './IndexProvider';
-import { CommandPalette } from '../components/CommandPalette';
+import { CommandBar } from '../components/command-bar/CommandBar';
 import { Sidebar } from '../components/Sidebar';
 import { Toaster } from '../components/Toaster';
 import { AdoptPage } from '../pages/AdoptPage';
@@ -10,9 +10,11 @@ import { SettingsPage } from '../pages/SettingsPage';
 import { SkillsPage } from '../pages/SkillsPage';
 import { TrashPage } from '../pages/TrashPage';
 import { DiscoverPage } from '../pages/DiscoverPage';
+import { useAppearanceBoot } from '../theme/useAppearanceBoot';
 const SkillDetailPage = lazy(() => import('../pages/SkillDetailPage').then((module) => ({ default: module.SkillDetailPage })));
 
 export function App() {
+  useAppearanceBoot();
   return (
     <IndexProvider>
       <Toaster>
@@ -32,9 +34,9 @@ export function App() {
                 <Route path="/settings" element={<SettingsPage />} />
               </Routes>
             </div>
+            <CommandBar />
           </main>
         </div>
-        <CommandPalette />
       </Toaster>
     </IndexProvider>
   );

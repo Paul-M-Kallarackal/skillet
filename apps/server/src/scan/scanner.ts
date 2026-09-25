@@ -29,7 +29,10 @@ let current: SkilletIndex = {
   hubPath: '',
   scannedAt: '',
   stalePluginVersions: 0,
-  scanMs: 0
+  scanMs: 0,
+  showAllAgents: false,
+  plugins: [],
+  staleCaches: []
 };
 
 export function getIndex(): SkilletIndex {
@@ -54,6 +57,30 @@ function ownerDirFor(dir: string, projectDirNames: string[]): string {
     return dirname(dir);
   }
   return dir.slice(0, dir.length - longest.length - 1);
+}
+
+/** Repositories that hold no skill instance are left out of the index entirely. */
+function reposWithSkills(repos: Repo[], instances: { repoId: string }[]): Repo[] {
+  const used = new Set<string>();
+  for (const instance of instances) {
+    if (instance.repoId.length > 0) {
+      used.add(instance.repoId);
+    }
+  }
+  const kept: Repo[] = [];
+  for (const repo of repos) {
+    if (!used.has(repo.id)) {
+      continue;
+    }
+    const worktreeIds: string[] = [];
+    for (const worktreeId of repo.worktreeIds) {
+      if (used.has(worktreeId)) {
+        worktreeIds.push(worktreeId);
+      }
+    }
+    kept.push({ ...repo, worktreeIds });
+  }
+  return kept;
 }
 
 function innermostRepo(repos: Repo[], dir: string): Repo | null {
@@ -84,7 +111,7 @@ function syntheticRepo(ownerDir: string): Repo {
   };
 }
 
-export async function scanAll(): Promise<SkilletIndex> {
+async function runScan(): Promise<SkilletIndex> {
   const started = Date.now();
   try {
     const config = await loadConfig();
@@ -282,22 +309,50 @@ export async function scanAll(): Promise<SkilletIndex> {
 
     const index: SkilletIndex = {
       agents,
-      repos,
+      repos: reposWithSkills(repos, allInstances),
       skills,
       cells,
       hubPath: config.hubPath,
       scannedAt: new Date().toISOString(),
-      stalePluginVersions: plugins.staleVersions,
-      scanMs: Date.now() - started
+      stalePluginVersions: plugins.staleCaches.length,
+      plugins: plugins.plugins,
+      staleCaches: plugins.staleCaches,
+      scanMs: Date.now() - started,
+      showAllAgents: config.showAllAgents
     };
     setIndex(index);
     return index;
   } catch (error) {
     throw new SkilletError({
       message: 'scan failed',
-      method: 'scanAll',
+      method: 'runScan',
       service: SERVICE,
       error
     });
   }
+}
+
+let running: Promise<SkilletIndex> | null = null;
+let queued: Promise<SkilletIndex> | null = null;
+
+/**
+ * Scans are serialized. A request that arrives mid-scan waits for one follow-up scan, which reads the
+ * latest config, so a scan started before a settings change can never be the last word.
+ */
+export function scanAll(): Promise<SkilletIndex> {
+  if (!running) {
+    running = runScan().finally(() => {
+      running = null;
+    });
+    return running;
+  }
+  if (!queued) {
+    queued = running
+      .catch(() => null)
+      .then(() => {
+        queued = null;
+        return scanAll();
+      });
+  }
+  return queued;
 }

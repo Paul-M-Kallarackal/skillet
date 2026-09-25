@@ -3,21 +3,20 @@ import { api, errorMessage } from '../api/client';
 import { useIndex } from '../app/IndexProvider';
 import { useToast } from '../components/Toaster';
 import type { SkilletConfig } from '../api/client.types';
+import { SegmentedTabs } from '../components/shell/SegmentedTabs';
+import { SettingRow } from '../components/shell/SettingRow';
+import { Switch } from '../components/shell/Switch';
+import { AppearanceSettings } from './settings/AppearanceSettings';
+import { useSettingsAutosave } from './settings/useSettingsAutosave';
 
-function splitLines(value: string): string[] {
-  const next: string[] = [];
-  for (const line of value.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed.length > 0) {
-      next.push(trimmed);
-    }
-  }
-  return next;
-}
+type SettingsTab = 'general' | 'scanning' | 'appearance';
 
-function splitCommaList(value: string): string[] {
+const MIN_DEPTH = 1;
+const MAX_DEPTH = 20;
+
+function splitList(value: string, separator: string): string[] {
   const next: string[] = [];
-  for (const part of value.split(',')) {
+  for (const part of value.split(separator)) {
     const trimmed = part.trim();
     if (trimmed.length > 0) {
       next.push(trimmed);
@@ -30,12 +29,21 @@ export function SettingsPage() {
   const { refresh } = useIndex();
   const toast = useToast();
   const [config, setConfig] = useState<SkilletConfig | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<SettingsTab>('general');
+  const [rootsText, setRootsText] = useState('');
+  const [ignoreText, setIgnoreText] = useState('');
+  const [depthText, setDepthText] = useState('');
+  const { schedule, status } = useSettingsAutosave(refresh);
 
   const load = useCallback(() => {
     api
       .getConfig()
-      .then((result) => setConfig(result.config))
+      .then((result) => {
+        setConfig(result.config);
+        setRootsText(result.config.projectRoots.join('\n'));
+        setIgnoreText(result.config.ignoreDirs.join(', '));
+        setDepthText(String(result.config.maxDepth));
+      })
       .catch((cause: unknown) => toast.push(errorMessage(cause, 'could not load settings'), 'error'));
   }, [toast]);
 
@@ -44,77 +52,72 @@ export function SettingsPage() {
   }, [load]);
 
   if (!config) {
-    return <div>Loading settings...</div>;
+    return <div className="empty-state" role="status">Loading settings…</div>;
   }
 
-  const save = () => {
-    setBusy(true);
-    api
-      .putConfig({
-        projectRoots: config.projectRoots,
-        maxDepth: config.maxDepth,
-        ignoreDirs: config.ignoreDirs,
-        showAllAgents: config.showAllAgents
-      })
-      .then(() => {
-        refresh();
-        toast.push('Saved and rescanned', 'ok');
-      })
-      .catch((cause: unknown) => toast.push(errorMessage(cause, 'save failed'), 'error'))
-      .finally(() => setBusy(false));
+  const update = (patch: Partial<SkilletConfig>) => {
+    setConfig({ ...config, ...patch });
+    schedule(patch);
   };
+
+  const editDepth = (value: string) => {
+    setDepthText(value);
+    const depth = Number(value);
+    if (Number.isInteger(depth) && depth >= MIN_DEPTH && depth <= MAX_DEPTH) {
+      update({ maxDepth: depth });
+    }
+  };
+
+  let statusLabel = '';
+  if (status === 'saving') {
+    statusLabel = 'Saving…';
+  } else if (status === 'saved') {
+    statusLabel = 'Saved';
+  }
 
   return (
     <div className="settings-page">
       <div className="page-header">
         <div className="page-title-group">
-          <div className="page-eyebrow">Workspace configuration</div>
           <h1>Settings</h1>
-          <p className="page-description">Control where Skillet finds projects and how deeply it scans.</p>
+          <p className="page-description">Stored in ~/.skillet/config.json. Changes apply instantly.</p>
         </div>
       </div>
-      <div className="surface settings-panel">
-      <label className="field">
-        <span className="field-label">Hub path</span><span className="field-help">Where adopted skills live</span>
-        <input value={config.hubPath} readOnly />
-      </label>
-      <label className="field">
-        <span className="field-label">Project roots</span><span className="field-help">One directory per line</span>
-        <textarea
-          rows={4}
-          value={config.projectRoots.join('\n')}
-          onChange={(event) => setConfig({ ...config, projectRoots: splitLines(event.target.value) })}
-        />
-      </label>
-      <label className="field">
-        <span className="field-label">Maximum depth</span><span className="field-help">How many directories deep to walk</span>
-        <input
-          type="number"
-          value={config.maxDepth}
-          onChange={(event) => setConfig({ ...config, maxDepth: Number(event.target.value) })}
-        />
-      </label>
-      <label className="field">
-        <span className="field-label">Ignored directories</span><span className="field-help">Comma separated</span>
-        <input
-          value={config.ignoreDirs.join(',')}
-          onChange={(event) => setConfig({ ...config, ignoreDirs: splitCommaList(event.target.value) })}
-        />
-      </label>
-      <label className="toggle-control settings-toggle">
-        <input
-          type="checkbox"
-          checked={config.showAllAgents}
-          onChange={(event) => setConfig({ ...config, showAllAgents: event.target.checked })}
-        />
-        <span>Include every known agent in the visibility matrix</span>
-      </label>
-      <div className="settings-actions">
-        <button className="primary" onClick={save} disabled={busy}>
-          Save and rescan
-        </button>
+      <div className="shell-settings-bar">
+        <SegmentedTabs<SettingsTab> label="Settings section" value={tab} onChange={setTab} options={[{ value: 'general', label: 'General' }, { value: 'scanning', label: 'Scanning' }, { value: 'appearance', label: 'Appearance' }]} />
+        <span className="shell-save-status" role="status">{statusLabel}</span>
       </div>
-      </div>
+      {tab === 'appearance' && <AppearanceSettings initial={config.appearance} />}
+      {tab === 'general' && (
+        <div className="shell-settings-section">
+          <SettingRow title="Hub path" description="Where adopted skills live. Every agent links to this copy.">
+            <code className="shell-setting-value">{config.hubPath}</code>
+          </SettingRow>
+          <SettingRow title="Show every known agent" description="Off: only agents detected on this machine appear in the sidebar, commands and visibility. Turn on to include all known agents.">
+            <Switch label="Show every known agent" checked={config.showAllAgents} onChange={(showAllAgents) => update({ showAllAgents })} />
+          </SettingRow>
+        </div>
+      )}
+      {tab === 'scanning' && (
+        <div className="shell-settings-section">
+          <SettingRow title="Project roots" description="Folders Skillet searches for repositories, one per line. Projects without skills are skipped." stacked>
+            <textarea className="shell-text-input" rows={4} spellCheck={false} aria-label="Project roots" value={rootsText} onChange={(event) => {
+              setRootsText(event.target.value);
+              update({ projectRoots: splitList(event.target.value, '\n') });
+            }} />
+          </SettingRow>
+          <SettingRow title="Maximum depth" description={`How many folders deep to look inside each root (${MIN_DEPTH}–${MAX_DEPTH}).`}>
+            <input className="shell-text-input shell-number-input" type="number" min={MIN_DEPTH} max={MAX_DEPTH} aria-label="Maximum depth" value={depthText} onChange={(event) => editDepth(event.target.value)} />
+          </SettingRow>
+          <SettingRow title="Ignored folders" description="Folder names never scanned, separated by commas." stacked>
+            <input className="shell-text-input" spellCheck={false} aria-label="Ignored folders" value={ignoreText} onChange={(event) => {
+              setIgnoreText(event.target.value);
+              update({ ignoreDirs: splitList(event.target.value, ',') });
+            }} />
+          </SettingRow>
+          <p className="shell-settings-note">Skillet rescans on open and every 10 seconds, so changes show up on their own.</p>
+        </div>
+      )}
     </div>
   );
 }
