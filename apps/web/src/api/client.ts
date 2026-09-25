@@ -7,7 +7,8 @@ import type {
   SkilletConfig,
   SkilletIndex,
   SkillFrontmatter,
-  TrashEntry
+  TrashEntry,
+  UninstallPreview
 } from './client.types';
 
 async function request<T>(path: string, init: RequestInit): Promise<T> {
@@ -82,6 +83,15 @@ export const api = {
   copy(id: string, payload: { target: LinkTarget; mode: 'link' | 'copy'; dryRun: boolean }): Promise<OpResult> {
     return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/copy`, jsonInit('POST', payload));
   },
+  link(id: string, payload: { target: LinkTarget; dryRun: boolean }): Promise<OpResult> {
+    return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/link`, jsonInit('POST', payload));
+  },
+  move(id: string, payload: { target: LinkTarget; keepLinkAtSource: boolean; dryRun: boolean }): Promise<OpResult> {
+    return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/move`, jsonInit('POST', payload));
+  },
+  undo(): Promise<{ entry: { id: string; action: string } }> {
+    return request('/api/journal/undo', mutateInit('POST'));
+  },
   trash(id: string, payload: { dryRun: boolean; instanceId?: string }): Promise<OpResult> {
     return request<OpResult>(`/api/skills/${encodeURIComponent(id)}/trash`, jsonInit('POST', payload));
   },
@@ -105,6 +115,15 @@ export const api = {
   },
   planAdopt(): Promise<AdoptPlan> {
     return request<AdoptPlan>('/api/adopt/plan', mutateInit('POST'));
+  },
+  setPluginEnabled(key: string, payload: { enabled: boolean; dryRun: boolean }): Promise<OpResult> {
+    return request<OpResult>(`/api/plugins/${encodeURIComponent(key)}/enabled`, jsonInit('POST', payload));
+  },
+  uninstallPlugin(key: string, payload: { dryRun: boolean }): Promise<UninstallPreview> {
+    return request<UninstallPreview>(`/api/plugins/${encodeURIComponent(key)}/uninstall`, jsonInit('POST', payload));
+  },
+  cleanPluginCache(payload: { dryRun: boolean }): Promise<OpResult> {
+    return request<OpResult>('/api/plugins/clean-cache', jsonInit('POST', payload));
   },
   applyAdopt(decisions: AdoptDecisionInput[]): Promise<{ result: OpResult }> {
     return request('/api/adopt/apply', jsonInit('POST', { decisions }));

@@ -96,6 +96,32 @@ export interface Repo {
   worktreeIds: string[];
 }
 
+export interface PluginInfo {
+  key: string;
+  name: string;
+  marketplace: string;
+  version: string;
+  enabled: boolean;
+  installPath: string;
+  skillNames: string[];
+}
+
+export interface StaleCache {
+  path: string;
+  plugin: string;
+  marketplace: string;
+  version: string;
+  bytes: number;
+}
+
+export interface UninstallPreview {
+  key: string;
+  command: string[];
+  skillCount: number;
+  applied: boolean;
+  output: string;
+}
+
 export interface SkilletIndex {
   agents: Agent[];
   repos: Repo[];
@@ -105,6 +131,9 @@ export interface SkilletIndex {
   scannedAt: string;
   stalePluginVersions: number;
   scanMs: number;
+  showAllAgents: boolean;
+  plugins: PluginInfo[];
+  staleCaches: StaleCache[];
 }
 
 export interface FsStep {
@@ -122,12 +151,27 @@ export interface OpResult {
   journalId: string;
 }
 
+export type AppearanceDensity = 'comfortable' | 'compact';
+
+export interface AppearanceConfig {
+  preset: string;
+  accent: string;
+  sidebar: string;
+  gradientFrom: string;
+  gradientTo: string;
+  gradient: boolean;
+  density: AppearanceDensity;
+}
+
 export interface SkilletConfig {
   hubPath: string;
   projectRoots: string[];
   maxDepth: number;
   ignoreDirs: string[];
   showAllAgents: boolean;
+  sidebarAgents: string[] | null;
+  sidebarRepos: string[] | null;
+  appearance: AppearanceConfig;
 }
 
 interface TrashedLink {

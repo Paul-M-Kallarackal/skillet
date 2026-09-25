@@ -7,6 +7,7 @@ import { adoptRoute } from './routes/adopt-route';
 import { agentsRoute } from './routes/agents-route';
 import { configRoute } from './routes/config-route';
 import { catalogRoute } from './routes/catalog-route';
+import { pluginsRoute } from './routes/plugins-route';
 import { projectsRoute } from './routes/projects-route';
 import { eventsRoute } from './routes/events-route';
 import { indexRoute } from './routes/index-route';
@@ -38,6 +39,7 @@ app.route('/api/adopt', adoptRoute);
 app.route('/api/config', configRoute);
 app.route('/api/catalog', catalogRoute);
 app.route('/api/projects', projectsRoute);
+app.route('/api/plugins', pluginsRoute);
 
 app.onError((error, c) => {
   if (isSkilletError(error)) {

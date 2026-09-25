@@ -1,3 +1,4 @@
+import type { PluginInfo, StaleCache } from './plugins.types';
 import type { Agent } from '../registry/agents.types';
 import type { VisibilityCell } from '../visibility/visibility.types';
 import type { Repo } from './git.types';
@@ -28,4 +29,8 @@ export interface SkilletIndex {
   scannedAt: string;
   stalePluginVersions: number;
   scanMs: number;
+  /** Owner opted in to listing every known agent, not only the ones detected on this machine. */
+  showAllAgents: boolean;
+  plugins: PluginInfo[];
+  staleCaches: StaleCache[];
 }

@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { loadConfig, saveConfig } from '../config/config';
+import { UI_ONLY_CONFIG_KEYS } from '../config/config.constants';
 import type { SkilletConfig } from '../config/config.types';
 import { SkilletError } from '../errors';
 import { scanAll } from '../scan/scanner';
@@ -25,6 +26,16 @@ configRoute.put('/', async (c) => {
   try {
     const body = (await c.req.json()) as { patch: Partial<SkilletConfig> };
     const config = await saveConfig(body.patch);
+    const patchKeys = Object.keys(body.patch);
+    let uiOnly = patchKeys.length > 0;
+    for (const key of patchKeys) {
+      if (!UI_ONLY_CONFIG_KEYS.includes(key)) {
+        uiOnly = false;
+      }
+    }
+    if (uiOnly) {
+      return c.json({ config, scannedAt: null });
+    }
     const index = await scanAll();
     await startWatcher();
     return c.json({ config, scannedAt: index.scannedAt });
