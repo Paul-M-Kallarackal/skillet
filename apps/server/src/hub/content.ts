@@ -81,6 +81,7 @@ function findInstance(skillId: string, instanceId: string): SkillInstance {
 export async function editContent(input: EditContentInput): Promise<OpResult> {
   try {
     const instance = findInstance(input.skillId, input.instanceId);
+    if (instance.scope === 'plugin') throw new SkilletError({ message: 'plugin skills are read-only', method: 'editContent', service: SERVICE, error: null, code: 'PLUGIN_READONLY', status: 400 });
     await assertNotPlugin(instance.absPath);
     await assertInsideRoots([instance.absPath]);
 
@@ -189,7 +190,7 @@ export async function renameSkill(input: RenameInput): Promise<OpResult> {
     if (!linkedSource) inverse.push(writeStep(join(canonical.absPath, 'SKILL.md'), previous, 'restore name field'));
 
     for (const instance of target.instances) {
-      if (instance.kind !== 'symlink' || instance.id === canonical.id) {
+      if (instance.kind !== 'symlink' || instance.id === canonical.id || instance.symlinkTarget !== sourcePath || instance.scope === 'plugin') {
         continue;
       }
       const newLinkPath = join(dirname(instance.absPath), input.newName);

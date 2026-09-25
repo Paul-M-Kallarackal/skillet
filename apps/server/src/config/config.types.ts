@@ -22,5 +22,4 @@ export interface SkilletConfig {
   sidebarRepos: string[] | null;
   appearance: AppearanceConfig;
   customAgents: AgentDefinition[];
-  scanRuntimeDirs: boolean;
 }

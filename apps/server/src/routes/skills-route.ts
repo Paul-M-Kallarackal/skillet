@@ -131,8 +131,8 @@ skillsRoute.post('/:id/move', async (c) => {
 skillsRoute.post('/:id/trash', async (c) => {
   try {
     const id = decodeURIComponent(c.req.param('id'));
-    const body = (await c.req.json()) as { dryRun: boolean };
-    const result = await trashSkill({ skillId: id, dryRun: body.dryRun });
+    const body = (await c.req.json()) as { dryRun: boolean; instanceId?: string };
+    const result = await trashSkill({ skillId: id, ...body });
     return c.json(await finish(result));
   } catch (error) {
     wrap('trashSkill', error);

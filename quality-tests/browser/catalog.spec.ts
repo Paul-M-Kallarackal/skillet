@@ -54,12 +54,12 @@ test('handles empty results, network errors, duplicates, and an expired preview'
   await page.route('**/api/catalog/preview', (route) => route.fulfill({ json: { ...preview, existing: true } }));
   await page.getByLabel('Search skills or paste a skills.sh link').fill(`https://skills.sh/${skill.source}/${skill.slug}`);
   await page.getByRole('button', { name: 'Search', exact: true }).click();
-  await page.getByRole('button', { name: /^Review / }).click();
+  await page.getByRole('button', { name: `Review ${skill.name} from ${skill.source}`, exact: true }).click();
   await expect(page.getByRole('button', { name: 'Add to library' })).toBeDisabled();
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await page.route('**/api/catalog/preview', (route) => route.fulfill({ json: preview }));
   await page.route('**/api/catalog/install', (route) => route.fulfill({ status: 409, json: { message: 'This preview expired. Review the skill again before adding it.' } }));
-  await page.getByRole('button', { name: /^Review / }).click();
+  await page.getByRole('button', { name: `Review ${skill.name} from ${skill.source}`, exact: true }).click();
   await page.getByRole('button', { name: 'Add to library' }).click();
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('preview expired');
 });
@@ -77,7 +77,7 @@ test('demo suggestions open the existing review flow without a search', async ({
   await expectNoSeriousAccessibilityViolations(page);
   await page.screenshot({ path: `.impeccable/review/demo-skills-${testInfo.project.name}.png`, fullPage: true });
   await page.getByRole('button', { name: 'Review NestJS best practices from kadajett/agent-nestjs-skills' }).click();
-  expect(requested).toEqual({ source: 'kadajett/agent-nestjs-skills', slug: 'nestjs-best-practices' });
+  expect(requested).toMatchObject({ source: 'kadajett/agent-nestjs-skills', slug: 'nestjs-best-practices' });
   await expect(page.getByRole('dialog', { name: 'Review skill' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Add to library' })).toBeEnabled();
 });

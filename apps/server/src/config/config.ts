@@ -85,9 +85,6 @@ function merge(raw: Record<string, unknown>): SkilletConfig {
     merged.sidebarRepos = readStringList(raw.sidebarRepos);
   }
   merged.appearance = mergeAppearance(raw.appearance);
-  if (typeof raw.scanRuntimeDirs === 'boolean') {
-    merged.scanRuntimeDirs = raw.scanRuntimeDirs;
-  }
   if (Array.isArray(raw.customAgents)) {
     merged.customAgents = raw.customAgents as SkilletConfig['customAgents'];
   }

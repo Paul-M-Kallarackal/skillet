@@ -19,8 +19,14 @@ test('loads the inventory and primary pages', async ({ page, consoleErrors }) =>
   await page.getByRole('link', { name: /All agents/ }).click();
   await expect(page.getByRole('heading', { name: 'Agents', exact: true })).toBeVisible();
 
+  if (await menu.isVisible()) {
+    await expect(menu).toHaveAttribute('aria-expanded', 'false');
+    await menu.click();
+  }
+
   await page.getByRole('link', { name: 'Settings' }).click();
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+  if (await menu.isVisible()) await expect(menu).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByRole('button', { name: 'Save and rescan' })).toBeVisible();
   expect(consoleErrors).toEqual([]);
 });

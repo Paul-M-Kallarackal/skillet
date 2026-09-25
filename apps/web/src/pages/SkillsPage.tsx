@@ -5,9 +5,10 @@ import { PluginList } from '../components/shell/PluginList';
 import { SkillList } from '../components/shell/SkillList';
 import { SegmentedTabs } from '../components/shell/SegmentedTabs';
 import type { SegmentedOption } from '../components/shell/SegmentedTabs';
-import { isLinkedCell, SCOPE_LABELS } from '../components/shell/skill-visibility';
+import { SCOPE_LABELS } from '../components/shell/skill-visibility';
 import { RESULT_COUNT_EVENT } from '../components/command-bar/command-bar.constants';
 import { presentSkill } from '../components/skill-presentation';
+import { canAgentReadSkill } from '../components/skill-access';
 import type { Skill } from '../api/client.types';
 
 export function SkillsPage() {
@@ -43,39 +44,35 @@ export function SkillsPage() {
     const needle = query.trim().toLowerCase();
     for (const skill of index.skills) {
       if (hubOnly && !skill.instances.some((instance) => instance.isHub)) continue;
-      const identicalGlobal = skill.scope === 'project' && index.skills.some((candidate) => candidate.scope === 'global' && candidate.name === skill.name && !candidate.diverged && skill.instances.every((local) => Boolean(local.contentHash) && candidate.instances.some((global) => global.contentHash === local.contentHash)));
-      if (identicalGlobal && (!scope && !repo && !agent)) continue;
-      const presentation = presentSkill(skill);
-      if (repo.length > 0 && skill.repoId !== repo) {
+      // A skill groups its installations; project and agent filters apply to the installations that match.
+      const inRepo: Skill['instances'] = [];
+      for (const instance of skill.instances) {
+        if (repo.length === 0 || instance.repoId === repo) {
+          inRepo.push(instance);
+        }
+      }
+      if (inRepo.length === 0) {
         continue;
       }
+      const presentation = presentSkill(skill);
       if (needle.length > 0) {
         const haystack = `${skill.name} ${skill.description} ${presentation.title} ${presentation.summary}`.toLowerCase();
         if (!haystack.includes(needle)) {
           continue;
         }
       }
-      if (agent.length > 0) {
-        let cells = index.cells[skill.id];
-        if (!cells) {
-          cells = [];
-        }
-        let readable = skill.instances.some((instance) => instance.readers?.includes(agent)) && !cells.some((cell) => cell.agentId === agent && cell.state === 'off');
-        for (const cell of cells) {
-          if (cell.agentId !== agent) {
-            continue;
-          }
-          if (isLinkedCell(cell)) {
-            readable = true;
-          }
-        }
-        if (!readable) {
-          continue;
-        }
+      if (agent.length > 0 && !canAgentReadSkill(inRepo, index.cells[skill.id] ?? [], agent)) {
+        continue;
       }
-      counts.set(skill.scope, (counts.get(skill.scope) ?? 0) + 1);
+      const scopes = new Set<string>();
+      for (const instance of inRepo) {
+        scopes.add(instance.scope);
+      }
+      for (const instanceScope of scopes) {
+        counts.set(instanceScope, (counts.get(instanceScope) ?? 0) + 1);
+      }
       counts.set('', (counts.get('') ?? 0) + 1);
-      if (scope.length > 0 && skill.scope !== scope) {
+      if (scope.length > 0 && !scopes.has(scope)) {
         continue;
       }
       out.push(skill);

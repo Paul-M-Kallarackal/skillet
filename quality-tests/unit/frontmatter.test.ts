@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'bun:test';
 import { parseSkillFile, serialiseSkillFile } from '../../apps/server/src/scan/frontmatter';
 
 describe('skill frontmatter', () => {

@@ -61,6 +61,7 @@ async function watchTargets(): Promise<string[]> {
         continue;
       }
       add(instance.parentDir);
+      if (instance.kind === 'symlink') add(instance.symlinkTarget);
     }
   }
   return targets;
@@ -95,7 +96,6 @@ export async function startWatcher(): Promise<void> {
     }
     const next = chokidar.watch(targets, {
       ignoreInitial: true,
-      depth: 2,
       followSymlinks: false,
       usePolling: false
     });

@@ -1,12 +1,8 @@
 import { Bot, Globe } from 'lucide-react';
-import { additionalAgentLogos } from './agent-logo-map';
 import '../styles/agent-icons.css';
 
 const icons: Record<string, string> = {
-  ...additionalAgentLogos,
-  zed: 'zed', grok: 'grok',
-  codex: 'openai', 'claude-code': 'claudecode', cursor: 'cursor', pi: 'pi', opencode: 'opencode',
-  'gemini-cli': 'gemini', gemini: 'gemini', 'github-copilot': 'githubcopilot', copilot: 'githubcopilot', windsurf: 'windsurf', cline: 'cline'
+  codex: 'openai', 'claude-code': 'claudecode', cursor: 'cursor', pi: 'pi', opencode: 'opencode'
 };
 
 export function AgentIcon({ id, name, decorative = false }: { id: string; name: string; decorative?: boolean }) {

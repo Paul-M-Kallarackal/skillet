@@ -300,7 +300,7 @@ async function runScan(): Promise<SkilletIndex> {
       }
     }
 
-    const skills = buildSkills(allInstances, repos, config.hubPath);
+    const skills = buildSkills(allInstances, repos);
     const overrides = await readOverrideState(repos);
     const cells: SkilletIndex['cells'] = {};
     for (const skill of skills) {

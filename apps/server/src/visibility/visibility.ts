@@ -8,15 +8,6 @@ import type { OverrideState } from '../scan/overrides.types';
 import type { SkillInstance } from '../scan/walk.types';
 import type { CellState, VisibilityCell } from './visibility.types';
 
-function instanceForAgent(skill: Skill, agentId: string): SkillInstance | null {
-  for (const instance of skill.instances) {
-    if (instance.readers.includes(agentId)) {
-      return instance;
-    }
-  }
-  return null;
-}
-
 function claudeOverrideState(raw: string): CellState {
   if (raw === 'off') {
     return 'off';
@@ -92,8 +83,8 @@ export function computeCells(
       continue;
     }
 
-    const instance = instanceForAgent(skill, agent.id);
-    if (!instance) {
+    const instances = skill.instances.filter((instance) => instance.readers.includes(agent.id));
+    if (instances.length === 0) {
       cells.push({
         agentId: agent.id,
         agentName: agent.name,
@@ -104,67 +95,69 @@ export function computeCells(
       continue;
     }
 
-    let state: CellState = 'unknown';
-    if (hasVerifiedPolicy(agent.id)) { state = 'auto'; }
-    const conditions = scopeConditions(instance, repos, agent.id);
+    for (const instance of instances) {
+      let state: CellState = 'unknown';
+      if (hasVerifiedPolicy(agent.id)) { state = 'auto'; }
+      const conditions = scopeConditions(instance, repos, agent.id);
 
-    if (agent.overrideSource === 'claude') {
-      const raw = overrides.claudeByRepo[instance.repoId]?.[skill.name] ?? overrides.claudeGlobal[skill.name] ?? '';
-      if (raw.length > 0) {
-        state = claudeOverrideState(raw);
-        conditions.push(`skillOverrides: ${raw}`);
+      if (agent.overrideSource === 'claude') {
+        const raw = overrides.claudeByRepo[instance.repoId]?.[skill.name] ?? overrides.claudeGlobal[skill.name] ?? '';
+        if (raw.length > 0) {
+          state = claudeOverrideState(raw);
+          conditions.push(`skillOverrides: ${raw}`);
+        }
+        conditions.push('Local settings estimate; session permissions and managed settings may restrict access');
+        if (skill.shadowed) {
+          conditions.push('shadowed by a global skill of the same name');
+        }
       }
-      conditions.push('Local settings estimate; session permissions and managed settings may restrict access');
-      if (skill.shadowed) {
-        conditions.push('shadowed by a global skill of the same name');
+
+      if (agent.overrideSource === 'codex' && overrides.codexDisabled.includes(join(instance.absPath, 'SKILL.md'))) {
+        state = 'off';
+        conditions.push('disabled in ~/.codex/config.toml');
       }
-    }
 
-    if (agent.overrideSource === 'codex' && overrides.codexDisabled.includes(join(instance.absPath, 'SKILL.md'))) {
-      state = 'off';
-      conditions.push('disabled in ~/.codex/config.toml');
-    }
-
-    if (state === 'auto' && supportsExplicitOnly(agent.id) && instance.frontmatter.disableModelInvocation) {
-      state = 'user-only';
-      conditions.push('disable-model-invocation: true');
-    }
-    if (state === 'auto' && agent.id === 'claude-code' && !instance.frontmatter.userInvocable) {
-      state = 'model-only';
-      conditions.push('user-invocable: false');
-    }
-
-    if (agent.id === 'codex') {
-      if (overrides.codexError || instance.policyError) {
-        state = 'unknown';
-        conditions.push(instance.policyError || 'Cannot parse Codex configuration');
-      } else if (state === 'auto' && instance.codexImplicitAllowed === false) {
+      if (state === 'auto' && supportsExplicitOnly(agent.id) && instance.frontmatter.disableModelInvocation) {
         state = 'user-only';
-        conditions.push('explicit $skill invocation; implicit policy disabled');
+        conditions.push('disable-model-invocation: true');
       }
-    }
-    if (agent.id === 'opencode') {
-      state = openCodeAccess(skill.name, overrides.openCodeGlobal, overrides.openCodeByRepo?.[instance.repoId]);
-      conditions.push('OpenCode skill permissions; profile and session settings may further restrict access');
-    }
-    if (agent.id === 'claude-code' && instance.frontmatter.disableModelInvocation && !instance.frontmatter.userInvocable) {
-      state = 'off';
-    }
-    if (agent.id === 'pi') {
-      conditions.push('Pi session skill discovery and command settings must permit loading');
-      if (instance.scope === 'project') { conditions.push('project trusted in Pi'); }
-    }
-    if (agent.id === 'cursor') { conditions.push('local Cursor session; remote availability is separate'); }
-    if (!hasVerifiedPolicy(agent.id)) { conditions.push('folder discovered; invocation behavior not verified'); }
-    const legacy = legacyCondition(agent, instance);
-    if (legacy.length > 0) {
-      conditions.push(legacy);
-    }
-    if (instance.kind === 'symlink') {
-      conditions.push(`symlink to ${instance.symlinkTarget}`);
-    }
+      if (state === 'auto' && agent.id === 'claude-code' && !instance.frontmatter.userInvocable) {
+        state = 'model-only';
+        conditions.push('user-invocable: false');
+      }
 
-    cells.push({ agentId: agent.id, agentName: agent.name, state, conditions, instanceId: instance.id });
+      if (agent.id === 'codex') {
+        if (overrides.codexError || instance.policyError) {
+          state = 'unknown';
+          conditions.push(instance.policyError || 'Cannot parse Codex configuration');
+        } else if (state === 'auto' && instance.codexImplicitAllowed === false) {
+          state = 'user-only';
+          conditions.push('explicit $skill invocation; implicit policy disabled');
+        }
+      }
+      if (agent.id === 'opencode') {
+        state = openCodeAccess(skill.name, overrides.openCodeGlobal, overrides.openCodeByRepo?.[instance.repoId]);
+        conditions.push('OpenCode skill permissions; profile and session settings may further restrict access');
+      }
+      if (agent.id === 'claude-code' && instance.frontmatter.disableModelInvocation && !instance.frontmatter.userInvocable) {
+        state = 'off';
+      }
+      if (agent.id === 'pi') {
+        conditions.push('Pi session skill discovery and command settings must permit loading');
+        if (instance.scope === 'project') { conditions.push('project trusted in Pi'); }
+      }
+      if (agent.id === 'cursor') { conditions.push('local Cursor session; remote availability is separate'); }
+      if (!hasVerifiedPolicy(agent.id)) { conditions.push('folder discovered; invocation behavior not verified'); }
+      const legacy = legacyCondition(agent, instance);
+      if (legacy.length > 0) {
+        conditions.push(legacy);
+      }
+      if (instance.kind === 'symlink') {
+        conditions.push(`symlink to ${instance.symlinkTarget}`);
+      }
+
+      cells.push({ agentId: agent.id, agentName: agent.name, state, conditions, instanceId: instance.id });
+    }
   }
   return cells;
 }

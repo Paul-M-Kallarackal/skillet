@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { mkdtemp, mkdir, readFile, rm, writeFile, realpath, symlink } from 'node:fs/promises';
+import { afterAll, afterEach, beforeEach, expect, it, mock } from 'bun:test';
+import { mkdtemp, mkdir, readFile, rm, writeFile, realpath, symlink, rename, cp } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import type { SkilletIndex, Skill } from '../../apps/server/src/scan/index.types';
@@ -8,19 +8,25 @@ import type { FsStep } from '../../apps/server/src/hub/steps.types';
 import { parseSkillFile } from '../../apps/server/src/scan/frontmatter';
 import { parseSettings } from '../../apps/server/src/hub/agent-settings';
 
-const state = vi.hoisted(() => ({ root: '', index: {} as SkilletIndex, inverse: [] as FsStep[] }));
-vi.mock('../../apps/server/src/config/config.constants', () => ({ get TRASH_PATH() { return join(state.root, 'trash'); } }));
-vi.mock('../../apps/server/src/scan/scanner', () => ({ getIndex: () => state.index }));
-vi.mock('../../apps/server/src/hub/journal', () => ({ appendEntry: async (_entry: unknown, inverse: FsStep[]) => { state.inverse = inverse; return { id: 'fixture-operation' }; } }));
-vi.mock('../../apps/server/src/config/config', () => ({ loadConfig: async () => ({ hubPath: join(state.root, 'hub'), projectRoots: [state.root], customAgents: [] }) }));
-vi.mock('../../apps/server/src/registry/agents', async (original) => {
-  const actual = await original<typeof import('../../apps/server/src/registry/agents')>();
-  return { ...actual, resolveAgents: async () => state.index.agents, expandPath: (raw: string) => raw.replace('$CODEX_HOME', join(state.root, 'codex')).replace('$CLAUDE_CONFIG_DIR', join(state.root, 'claude-code')).replace('$XDG_CONFIG_HOME', state.root) };
+const suiteRoot = await mkdtemp(join(tmpdir(), 'skillet-agent-contract-'));
+const state = { root: '', index: {} as SkilletIndex, inverse: [] as FsStep[] };
+afterAll(async () => { await rm(suiteRoot, { recursive: true, force: true }); });
+mock.module('../../apps/server/src/config/config.constants', () => ({ TRASH_PATH: join(suiteRoot, 'trash') }));
+mock.module('../../apps/server/src/scan/scanner', () => ({ getIndex: () => state.index }));
+mock.module('../../apps/server/src/hub/journal', () => ({ appendEntry: async (_entry: unknown, inverse: FsStep[]) => { state.inverse = inverse; return { id: 'fixture-operation' }; } }));
+mock.module('../../apps/server/src/config/config', () => ({ loadConfig: async () => ({ hubPath: join(state.root, 'hub'), projectRoots: [state.root], customAgents: [] }) }));
+const actualAgents = { ...await import('../../apps/server/src/registry/agents') };
+mock.module('../../apps/server/src/registry/agents', () => {
+  return { ...actualAgents, resolveAgents: async () => state.index.agents, expandPath: (raw: string) => raw.replace('$CODEX_HOME', join(state.root, 'codex')).replace('$CLAUDE_CONFIG_DIR', join(state.root, 'claude-code')).replace('$XDG_CONFIG_HOME', state.root) };
 });
-import { setSkillInvocation, setTrigger, type TriggerChanges } from '../../apps/server/src/hub/trigger';
-import { copySkill, installEverywhere, linkSkill } from '../../apps/server/src/hub/linking';
-import { trashSkill } from '../../apps/server/src/hub/trash';
-import { renameSkill } from '../../apps/server/src/hub/content';
+import type { TriggerChanges } from '../../apps/server/src/hub/trigger';
+// Bun does not hoist module mocks: load mutation services only after fixture mocks.
+const { setSkillInvocation, setTrigger } = await import('../../apps/server/src/hub/trigger');
+const { copySkill, installEverywhere, linkSkill, moveSkill } = await import('../../apps/server/src/hub/linking');
+const { trashSkill } = await import('../../apps/server/src/hub/trash');
+const { renameSkill } = await import('../../apps/server/src/hub/content');
+const { applyAdopt, planAdopt } = await import('../../apps/server/src/hub/adopt');
+import { buildSkills } from '../../apps/server/src/scan/index-builder';
 import { applySteps } from '../../apps/server/src/hub/steps';
 
 const ids = ['codex','claude-code','pi','opencode','cursor'];
@@ -28,7 +34,7 @@ const raw = '---\nname: demo\ndescription: Use for a demo\n---\n\nRead reference
 const defaults: TriggerChanges = { disableModelInvocation: false, userInvocable: true, paths: [], claudeOverride: '', claudeOverrideScope: 'global', codexEnabled: true };
 let skill: Skill;
 beforeEach(async () => {
-  state.root = await mkdtemp(join(tmpdir(), 'skillet-agent-contract-'));
+  state.root = await mkdtemp(join(suiteRoot, 'case-'));
   const source = join(state.root, 'hub', 'demo');
   await mkdir(join(source, 'references'), { recursive: true });
   await mkdir(join(source, 'scripts'), { recursive: true });
@@ -212,4 +218,76 @@ it('sets skill usage across physical copies, preserves content, and supports und
   await applySteps(state.inverse);
   expect(await readFile(join(destination, 'SKILL.md'), 'utf8')).toBe(raw);
   expect(await readFile(join(source.absPath, 'SKILL.md'), 'utf8')).toBe(raw);
+});
+
+async function attachCopy(location: string, scope: 'global' | 'project' | 'plugin') {
+  const source = skill.instances[0]!;
+  const destination = join(state.root, location, 'demo');
+  await cp(source.absPath, destination, { recursive: true });
+  const instance = { ...source, id: destination, absPath: destination, parentDir: join(state.root, location), scope, repoId: scope === 'project' ? join(state.root, location) : '', isHub: false, contentHash: 'same', kind: scope === 'plugin' ? 'plugin' as const : 'canonical' as const };
+  source.contentHash = 'same';
+  skill.instances.push(instance);
+  return instance;
+}
+
+it('does not rename or trash links belonging to another identical physical copy', async () => {
+  const project = await attachCopy('project', 'project');
+  const link = join(state.root, 'project-link/demo');
+  await mkdir(join(state.root, 'project-link'));
+  await symlink(project.absPath, link);
+  skill.instances.push({ ...project, id: link, absPath: link, kind: 'symlink', symlinkTarget: project.absPath });
+  await renameSkill({ skillId: skill.id, newName: 'renamed', dryRun: false });
+  expect(await realpath(link)).toBe(project.absPath);
+  expect(await readFile(join(link, 'SKILL.md'), 'utf8')).toBe(raw);
+  await applySteps(state.inverse);
+  await trashSkill({ skillId: skill.id, dryRun: false });
+  expect(await realpath(link)).toBe(project.absPath);
+  expect(await readFile(join(project.absPath, 'SKILL.md'), 'utf8')).toBe(raw);
+  await applySteps(state.inverse);
+});
+
+it('moves the chosen copy without redirecting links to other copies and can undo a source link', async () => {
+  const project = await attachCopy('project', 'project');
+  const link = join(state.root, 'project-link/demo');
+  await mkdir(join(state.root, 'project-link'));
+  await symlink(project.absPath, link);
+  skill.instances.push({ ...project, id: link, absPath: link, kind: 'symlink', symlinkTarget: project.absPath });
+  await moveSkill({ skillId: skill.id, target: { agentId: 'codex', scope: 'global', repoId: '' }, keepLinkAtSource: true, dryRun: false });
+  expect(await realpath(link)).toBe(project.absPath);
+  await applySteps(state.inverse);
+  expect(await readFile(join(skill.canonicalId, 'SKILL.md'), 'utf8')).toBe(raw);
+});
+
+it('keeps grouped plugin copies read-only during invocation and removal', async () => {
+  const plugin = await attachCopy('package', 'plugin');
+  await setSkillInvocation({ skillId: skill.id, automatic: false, dryRun: false });
+  expect(await readFile(join(plugin.absPath, 'SKILL.md'), 'utf8')).toBe(raw);
+  await expect(trashSkill({ skillId: skill.id, instanceId: plugin.id, dryRun: false })).rejects.toThrow(/read-only/);
+});
+
+it('adopts only global installations across content versions, with distinct backups and complete undo', async () => {
+  const source = skill.instances[0]!;
+  const original = join(state.root, 'first/skills/demo');
+  await mkdir(join(state.root, 'first/skills'), { recursive: true });
+  await rename(source.absPath, original);
+  Object.assign(source, { id: original, absPath: original, parentDir: join(state.root, 'first/skills'), isHub: false });
+  skill.canonicalId = original;
+  const b = await attachCopy('second/skills', 'global');
+  const c = await attachCopy('third/skills', 'global');
+  c.contentHash = 'different';
+  await writeFile(join(c.absPath, 'SKILL.md'), raw + 'Different version');
+  const project = await attachCopy('project', 'project');
+  const plugin = await attachCopy('package', 'plugin');
+  state.index.skills = buildSkills(skill.instances, []);
+  const plan = await planAdopt();
+  expect(plan.groups).toHaveLength(1);
+  expect(plan.groups[0]!.candidates).toHaveLength(3);
+  expect(plan.groups[0]!.conflict).toBe(true);
+  await applyAdopt([{ name: 'demo', winnerInstanceId: original, linkAgents: [] }]);
+  for (const instance of [source, b, c]) expect(await realpath(instance.absPath)).toBe(join(state.root, 'hub/demo'));
+  for (const instance of [project, plugin]) expect(await realpath(instance.absPath)).toBe(instance.absPath);
+  await applySteps(state.inverse);
+  expect(await readFile(join(original, 'SKILL.md'), 'utf8')).toBe(raw);
+  expect(await readFile(join(c.absPath, 'SKILL.md'), 'utf8')).toBe(raw + 'Different version');
+  expect(await realpath(b.absPath)).toBe(b.absPath);
 });

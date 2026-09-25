@@ -172,7 +172,6 @@ export interface SkilletConfig {
   sidebarAgents: string[] | null;
   sidebarRepos: string[] | null;
   appearance: AppearanceConfig;
-  scanRuntimeDirs: boolean;
 }
 
 interface TrashedLink {
@@ -187,15 +186,6 @@ export interface TrashEntry {
   originPath: string;
   trashPath: string;
   removedLinks: TrashedLink[];
-}
-
-export interface JournalEntry {
-  id: string;
-  at: string;
-  action: string;
-  skillId: string;
-  steps: FsStep[];
-  inverse: FsStep[];
 }
 
 interface AdoptCandidate {
@@ -232,16 +222,4 @@ export interface LinkTarget {
   agentId: string;
   scope: 'global' | 'project';
   repoId: string;
-}
-
-export interface TriggerChanges {
-  disableModelInvocation: boolean;
-  userInvocable: boolean;
-  paths: string[];
-  claudeOverride: string;
-  claudeOverrideScope: 'global' | 'project';
-  codexEnabled: boolean;
-  codexImplicitAllowed?: boolean;
-  openCodePermission?: string;
-  openCodeScope?: 'global' | 'project';
 }

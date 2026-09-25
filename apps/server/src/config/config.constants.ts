@@ -42,6 +42,5 @@ export const DEFAULT_CONFIG: SkilletConfig = {
   sidebarAgents: null,
   sidebarRepos: null,
   appearance: DEFAULT_APPEARANCE,
-  customAgents: [],
-  scanRuntimeDirs: true
+  customAgents: []
 };
